@@ -44,10 +44,20 @@ These skills are experimental and currently part of the testing ground setup.
 ## Recommended Flow
 
 - `plan-interview` aligns requirements.
-- `intent-framed-agent` locks execution intent and catches drift.
-- `context-surfing` rides peak context quality through execution and exits cleanly on drift.
+- `intent-framed-agent` locks execution intent and catches scope drift.
+- `context-surfing` rides peak context quality through execution and exits cleanly on context degradation.
 - `simplify-and-harden` improves post-implementation quality/security.
 - `self-improvement` captures recurring patterns across tasks.
+
+Not every task needs all five. Match depth to complexity:
+
+| Task | Skills |
+|------|--------|
+| Trivial (typo fix, rename) | None |
+| Small (isolated bug fix) | `simplify-and-harden` |
+| Medium (feature, multi-file) | `intent-framed-agent` + `simplify-and-harden` |
+| Large (refactor, new architecture) | Full pipeline |
+| Long-running (multi-session) | Full pipeline — `context-surfing` is critical |
 
 ## Usage
 
