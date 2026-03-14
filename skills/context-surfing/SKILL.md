@@ -54,6 +54,8 @@ Both skills are live during execution. They monitor different failure modes:
 
 They are complementary, not redundant. An agent can be perfectly on-scope while its context quality degrades (e.g., it's doing the right thing but starting to hallucinate details). Conversely, scope drift can happen with perfect context quality (the agent deliberately chases a tangent). Intent-framed-agent's Intent Checks continue firing alongside context-surfing's wave monitoring.
 
+**Precedence rule:** If both skills fire simultaneously (an Intent Check and a drift exit at the same time), context-surfing's exit takes precedence. Degraded context makes scope checks unreliable — resolve the context issue first, then resume scope monitoring in the next session.
+
 ### When to Use the Full Pipeline
 
 Not every task needs all five skills. Match pipeline depth to task complexity:
@@ -274,6 +276,40 @@ No handoff file needed for clean completions — just the outputs and a one-line
 3. `context-surfing` (context quality monitoring — runs concurrently with intent-framed-agent during execution)
 4. `simplify-and-harden` (post-completion quality/security pass)
 5. `self-improvement` (capture recurring patterns and promote durable rules)
+
+---
+
+## Hook Integration
+
+Enable automatic handoff detection at session start. This ensures handoff files from previous context exits are never silently ignored.
+
+### Setup (Claude Code / Codex)
+
+Add to `.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "UserPromptSubmit": [{
+      "matcher": "",
+      "hooks": [{
+        "type": "command",
+        "command": "./skills/context-surfing/scripts/handoff-checker.sh"
+      }]
+    }]
+  }
+}
+```
+
+This checks for unread handoff files in `.context-surfing/` on every prompt. If found, it reminds the agent to read the handoff before starting new work (~100 tokens overhead, skips silently when no handoff exists).
+
+### Copilot / Chat Fallback
+
+For agents without hook support, manually check at session start:
+
+```bash
+ls .context-surfing/handoff-*.md 2>/dev/null
+```
 
 ---
 

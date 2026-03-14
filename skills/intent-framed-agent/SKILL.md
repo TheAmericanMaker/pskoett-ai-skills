@@ -173,6 +173,11 @@ its context quality degrades. Conversely, scope drift can happen with perfect
 context quality. Intent Checks continue firing alongside context-surfing's wave
 monitoring.
 
+**Precedence rule:** If both skills fire simultaneously (an Intent Check and a
+context-surfing drift exit at the same time), the drift exit takes precedence.
+Degraded context makes scope checks unreliable — resolve the context issue
+first, then resume scope monitoring in the next session.
+
 ### What this skill produces
 
 - **Intent frame artifact** — consumed by context-surfing as part of the wave

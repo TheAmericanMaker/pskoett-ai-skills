@@ -221,6 +221,24 @@ AskUserQuestion: "I found an existing partial plan. Would you like to:"
 
 If resuming refinement, first summarize the current plan state and the most recent refinement changes, then continue with the fresh-eyes refinement loop.
 
+## Interoperability with Other Skills
+
+### What this skill consumes
+- **From the user:** Task description, requirements, and answers to interview questions.
+- **From the codebase:** Existing patterns, architecture, and conventions discovered during exploration.
+- **From context-surfing handoff files (on resume):** If a previous session exited due to context drift, the handoff file in `.context-surfing/` provides the re-entry point and remaining work for replanning.
+
+### What this skill produces
+- **Plan file** (`docs/plans/plan-NNN-<slug>.md`) — consumed by intent-framed-agent as context for the intent frame, and by context-surfing as part of the wave anchor. Copied verbatim into handoff files on drift exit.
+- **Planning depth classification** — informs how many skills to activate (see pipeline depth table in README).
+
+### Pipeline position
+1. `plan-interview` (requirements and plan generation — you are here)
+2. `intent-framed-agent` (execution contract + scope drift monitoring)
+3. `context-surfing` (context quality monitoring — runs concurrently with intent-framed-agent)
+4. `simplify-and-harden` (post-completion quality/security pass)
+5. `self-improvement` (capture recurring patterns and promote durable rules)
+
 ## Example
 
 ```

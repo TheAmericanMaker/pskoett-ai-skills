@@ -41,13 +41,44 @@ These skills are experimental and currently part of the testing ground setup.
 | [self-improvement-ci](skills/self-improvement-ci/) | CI-only self-improvement workflow for recurring failure-pattern capture using gh-aw |
 | [simplify-and-harden-ci](skills/simplify-and-harden-ci/) | CI-only simplify/harden workflow for pull requests using gh-aw with headless scan/report gates |
 
-## Recommended Flow
+## Skill Pipeline
 
-- `plan-interview` aligns requirements.
-- `intent-framed-agent` locks execution intent and catches scope drift.
-- `context-surfing` rides peak context quality through execution and exits cleanly on context degradation.
-- `simplify-and-harden` improves post-implementation quality/security.
-- `self-improvement` captures recurring patterns across tasks.
+Each skill prevents a distinct failure mode:
+
+| Skill | Failure it prevents |
+|-------|-------------------|
+| `plan-interview` | Building the wrong thing |
+| `intent-framed-agent` | Scope creep during execution |
+| `context-surfing` | Degraded-context corruption |
+| `simplify-and-harden` | Shipping rough/insecure code |
+| `self-improvement` | Repeating the same mistakes |
+
+### Lifecycle
+
+```
+[plan-interview] → [intent-framed-agent] ⟂ [context-surfing] → [simplify-and-harden] → [self-improvement]
+                                          ↑   concurrent    ↑
+```
+
+**Stage 1 — Planning** (manual gate): `plan-interview` runs a structured interview and produces a plan file in `docs/plans/`. This is the only skill that requires explicit invocation (`/plan-interview`). All downstream skills activate automatically.
+
+**Stage 2 — Execution** (concurrent monitoring): `intent-framed-agent` captures the intent frame and monitors *scope* drift. `context-surfing` monitors *context quality* drift. Both run simultaneously. If both fire at once, context-surfing's exit takes precedence — degraded context makes scope checks unreliable.
+
+**Stage 3 — Review** (post-completion): `simplify-and-harden` runs three passes (simplify, harden, document) on the completed work.
+
+**Stage 4 — Learning** (automatic): `self-improvement` captures recurring patterns from the session and promotes them to project-level instruction files.
+
+### Artifacts at each stage
+
+| Stage | Artifact | Location |
+|-------|----------|----------|
+| Planning | Plan file | `docs/plans/plan-NNN-<slug>.md` |
+| Execution | Intent frame | Emitted in session output |
+| Execution | Handoff file (on drift exit) | `.context-surfing/handoff-<slug>-<timestamp>.md` |
+| Review | Structured YAML summary | Appended to task output |
+| Learning | Learning entries | `.learnings/LEARNINGS.md`, `ERRORS.md`, `FEATURE_REQUESTS.md` |
+
+### Pipeline depth
 
 Not every task needs all five. Match depth to complexity:
 
@@ -63,29 +94,36 @@ Not every task needs all five. Match depth to complexity:
 
 To use a skill, add it to your agent's configuration or reference it directly.
 
-### Self-Improvement with Hooks
+### Hook Setup
 
-The self-improvement skill supports automatic activation via hooks. Add to `.claude/settings.json`:
+Several skills support automatic activation via hooks. Add to `.claude/settings.json`:
 
 ```json
 {
   "hooks": {
     "UserPromptSubmit": [{
       "matcher": "",
-      "hooks": [{
-        "type": "command",
-        "command": "./skills/self-improvement/scripts/activator.sh"
-      }]
+      "hooks": [
+        {
+          "type": "command",
+          "command": "./skills/self-improvement/scripts/activator.sh"
+        },
+        {
+          "type": "command",
+          "command": "./skills/context-surfing/scripts/handoff-checker.sh"
+        }
+      ]
     }]
   }
 }
 ```
 
-Features:
-- **Hook activation**: Automatic reminders to evaluate learnings after tasks
-- **Error detection**: PostToolUse hook detects command failures
-- **Skill extraction**: Promote high-value learnings to reusable skills
-- **Multi-agent support**: Works with Claude Code, Codex CLI, and GitHub Copilot
+| Hook Script | Skill | Purpose |
+|-------------|-------|---------|
+| `self-improvement/scripts/activator.sh` | self-improvement | Reminds to evaluate learnings after tasks |
+| `context-surfing/scripts/handoff-checker.sh` | context-surfing | Detects unread handoff files from previous context exits |
+
+Both hooks are lightweight (~50-100 tokens) and skip silently when not applicable.
 
 ## Contributing
 
