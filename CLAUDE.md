@@ -17,6 +17,7 @@ A collection of skills for AI agents following the [Agent Skills specification](
 Use these as canonical references when creating or updating skills.
 
 Public skills (`skills/`):
+- `skills/context-surfing/SKILL.md` - Monitor context window health and ride peak context quality during execution.
 - `skills/dx-data-navigator/SKILL.md` - Query DX data via MCP + SQL patterns.
 - `skills/intent-framed-agent/SKILL.md` - Capture intent at execution start and monitor coding-task scope drift.
 - `skills/plan-interview/SKILL.md` - Structured interview before implementation planning.
@@ -27,6 +28,8 @@ Public skills (`skills/`):
 - `skills/agent-teams-simplify-and-harden/SKILL.md` - Parallel implementation and audit loop.
 
 Local Claude skills (`.claude/skills/`):
+- `.claude/skills/context-surfing/SKILL.md` - Local copy of the context-surfing workflow.
+- `.claude/skills/intent-framed-agent/SKILL.md` - Local copy of the intent-framed-agent workflow.
 - `.claude/skills/mcp-builder/SKILL.md` - Build high-quality MCP servers.
 - `.claude/skills/plan-interview/SKILL.md` - Local copy of the plan-interview workflow.
 - `.claude/skills/self-improvement/SKILL.md` - Local copy of the self-improvement workflow.
