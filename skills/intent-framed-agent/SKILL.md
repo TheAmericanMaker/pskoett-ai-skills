@@ -152,10 +152,32 @@ Copilot/chat fallback:
 
 Use this skill as the front-door alignment layer for non-trivial coding work:
 1. `plan-interview` (optional, for requirement shaping)
-2. `intent-framed-agent` (execution contract + drift monitoring)
-3. Implementation
+2. `intent-framed-agent` (execution contract + scope drift monitoring)
+3. `context-surfing` (context quality monitoring — runs concurrently with intent-framed-agent during execution)
 4. `simplify-and-harden` (post-completion quality/security pass)
 5. `self-improvement` (capture recurring patterns and promote durable rules)
 
-This ordering helps reduce scope drift early and improve repeatability across
-tasks.
+### Relationship with context-surfing
+
+Both skills are live during execution. They monitor different failure modes:
+
+- **intent-framed-agent** monitors *scope* drift — is the agent doing the right
+  thing? It fires structured Intent Checks when work moves outside the stated
+  outcome.
+- **context-surfing** monitors *context quality* drift — is the agent still
+  capable of doing it well? It fires when the agent's own coherence degrades
+  (hallucination, contradiction, hedging).
+
+They are complementary, not redundant. An agent can be perfectly on-scope while
+its context quality degrades. Conversely, scope drift can happen with perfect
+context quality. Intent Checks continue firing alongside context-surfing's wave
+monitoring.
+
+### What this skill produces
+
+- **Intent frame artifact** — consumed by context-surfing as part of the wave
+  anchor and copied verbatim into handoff files on drift exit.
+- **Intent resolution** — signals task completion, which triggers
+  simplify-and-harden.
+- **Drift observations** — scope drift patterns can be logged to
+  self-improvement as learnings if they recur.
