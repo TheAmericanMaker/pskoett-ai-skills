@@ -1,0 +1,19 @@
+{
+  "name": "pskoett-ai-skills",
+  "version": "1.0.0",
+  "description": "AI agent skill pipeline: plan-interview, intent-framed-agent, context-surfing, simplify-and-harden, self-improvement, and agent-teams-simplify-and-harden. Prevents scope drift, context degradation, rough code, and repeated mistakes.",
+  "author": {
+    "name": "Peter Skøtt Pedersen",
+    "url": "https://github.com/pskoett"
+  },
+  "repository": "https://github.com/pskoett/pskoett-skills",
+  "license": "MIT",
+  "keywords": [
+    "skill-pipeline",
+    "code-quality",
+    "security",
+    "context-management",
+    "self-improvement",
+    "agent-teams"
+  ]
+}
