@@ -20,6 +20,21 @@ A two-phase team loop that produces production-quality code: **implement**, then
 - Fixing a list of issues or gaps identified in a review
 - Any task touching 5+ files where quality gates matter
 
+## Pipeline Integration
+
+This skill replaces stages 2–4 of the standard pipeline (execution, review, learning) with a team-based loop. It can follow `plan-interview` or run standalone — every upstream artifact is optional.
+
+```
+[plan-interview] → [agent-teams-simplify-and-harden] → [self-improvement]
+                    ├─ intent frame (team lead)
+                    ├─ implement (parallel agents)
+                    ├─ audit (parallel agents)
+                    ├─ drift check (team lead, between rounds)
+                    └─ learning loop output → self-improvement
+```
+
+When a plan file from `plan-interview` exists, the skill extracts tasks from it. When no plan exists, the team lead runs a brief inline planning phase. Context-surfing runs as a lightweight drift check for the team lead between loop rounds — sub-agents are short-lived and don't need it.
+
 ## The Pattern
 
 ```
@@ -64,6 +79,32 @@ The loop exits when ANY of these are true:
 **Budget guidance:** Track the cumulative diff growth across rounds. If fix rounds have added more than 30% on top of the original implementation diff, tighten the scope: skip medium/low simplify findings and focus only on harden patches and spec gaps.
 
 ## Step-by-Step Procedure
+
+### 0. Plan and Frame
+
+**If a plan file exists** (from `plan-interview` at `docs/plans/plan-NNN-<slug>.md` or user-provided): read it, extract the implementation checklist, and use those as the task list for step 2.
+
+**If no plan exists**, run a brief inline planning interview:
+
+1. What needs to be built, fixed, or hardened? (features, bugs, targets)
+2. What's the spec or source of truth? (doc, issue, PR, or verbal description)
+3. What are the acceptance criteria?
+
+Turn the answers into a concrete task list. This is not a full `plan-interview` — just enough to break the work into parallelizable units.
+
+**Intent frame:** Before creating the team, the team lead emits:
+
+```markdown
+## Intent Frame #1
+
+**Outcome:** [What the team session will deliver]
+**Approach:** [Team structure, number of agents, audit dimensions]
+**Constraints:** [Scope boundaries, loop cap, budget limits]
+**Success criteria:** [Clean audit or loop cap with all critical/high resolved]
+**Estimated complexity:** [Small / Medium / Large — based on task count and file count]
+```
+
+Confirm with the user before proceeding. This anchors all subsequent drift checks.
 
 ### 1. Create the Team
 
@@ -142,195 +183,19 @@ Spawn `Explore` agents (read-only -- they cannot edit files, which prevents them
 | **harden-auditor** | Security and resilience gaps | "If someone malicious saw this, what would they try?" |
 | **spec-auditor** | Implementation vs spec/plan completeness | "Does the code match what was asked for?" |
 
+Full prompt templates for each auditor are in `references/auditor-prompts.md`. Each prompt enforces: read-only scope, fresh-eyes start, structured finding format, and explicit zero-findings reporting.
+
 #### Simplify Auditor
 
-```
-Task tool (spawn teammate):
-  subagent_type: Explore
-  team_name: "<project>-harden"
-  name: "simplify-auditor"
-  prompt: |
-    You are a simplify auditor on the <project>-harden team.
-    Your name is simplify-auditor.
-
-    Your job is to find unnecessary complexity -- NOT fix it. You are
-    read-only.
-
-    SCOPE: Only review the following files (modified in this session).
-    Do NOT flag issues in other files, even if you notice them.
-    Files to review:
-    <paste file list here>
-
-    Fresh-eyes start (mandatory): Before reporting findings, re-read all
-    listed changed code with "fresh eyes" and actively look for obvious
-    bugs, errors, confusing logic, brittle assumptions, naming issues,
-    and missed hardening opportunities.
-
-    Review each file and check for:
-
-    1. Dead code and scaffolding -- debug logs, commented-out attempts,
-       unused imports, temporary variables left from iteration
-    2. Naming clarity -- function names, variables, and parameters that
-       don't read clearly when seen fresh
-    3. Control flow -- nested conditionals that could be flattened, early
-       returns that could replace deep nesting, boolean expressions that
-       could be simplified
-    4. API surface -- public methods/functions that should be private,
-       more exposure than necessary
-    5. Over-abstraction -- classes, interfaces, or wrapper functions not
-       justified by current scope. Agents tend to over-engineer.
-    6. Consolidation -- logic spread across multiple functions/files that
-       could live in one place
-
-    For each finding, categorize as:
-    - **Cosmetic** (dead code, unused imports, naming, control flow,
-      visibility reduction) -- low risk, easy fix
-    - **Refactor** (consolidation, restructuring, abstraction changes)
-      -- only flag when genuinely necessary, not just "slightly better."
-      The bar: would a senior engineer say the current state is clearly
-      wrong, not just imperfect?
-
-    For each finding report:
-    1. File and line number
-    2. Category (cosmetic or refactor)
-    3. What's wrong
-    4. What it should be (specific fix, not vague)
-    5. Severity: high / medium / low
-
-    If you notice issues outside the scoped files, list them separately
-    under "Out-of-scope observations" at the end.
-
-    Be thorough within scope. Check every listed file.
-    When done, send your complete findings to the team lead.
-    If you find ZERO in-scope issues, say so explicitly.
-```
+Spawned as `Explore` agent. Checks: dead code, naming, control flow, API surface, over-abstraction, consolidation. Categorizes findings as **cosmetic** or **refactor** (refactor bar: "clearly wrong, not just imperfect"). Reports file, line, category, fix, severity.
 
 #### Harden Auditor
 
-```
-Task tool (spawn teammate):
-  subagent_type: Explore
-  team_name: "<project>-harden"
-  name: "harden-auditor"
-  prompt: |
-    You are a security/harden auditor on the <project>-harden team.
-    Your name is harden-auditor.
-
-    Your job is to find security and resilience gaps -- NOT fix them.
-    You are read-only.
-
-    SCOPE: Only review the following files (modified in this session).
-    Do NOT flag issues in other files, even if you notice them.
-    Files to review:
-    <paste file list here>
-
-    Fresh-eyes start (mandatory): Before reporting findings, re-read all
-    listed changed code with "fresh eyes" and actively look for obvious
-    bugs, errors, confusing logic, brittle assumptions, naming issues,
-    and missed hardening opportunities.
-
-    Review each file and check for:
-
-    1. Input validation -- unvalidated external inputs (user input, API
-       params, file paths, env vars), type coercion issues, missing
-       bounds checks, unconstrained string lengths
-    2. Error handling -- non-specific catch blocks, errors logged without
-       context, swallowed exceptions, sensitive data in error messages
-    3. Injection vectors -- SQL injection, XSS, command injection, path
-       traversal, template injection in string-building code
-    4. Auth and authorization -- endpoints or functions missing auth,
-       incorrect permission checks, privilege escalation risks
-    5. Secrets and credentials -- hardcoded secrets, API keys, tokens,
-       credentials in log output, unparameterized connection strings
-    6. Data exposure -- internal state in error output, stack traces in
-       responses, PII in logs, database schemas leaked
-    7. Dependency risk -- new dependencies that are unmaintained, poorly
-       versioned, or have known vulnerabilities
-    8. Race conditions -- unsynchronized shared resources, TOCTOU
-       vulnerabilities in concurrent code
-
-    For each finding, categorize as:
-    - **Patch** (adding validation, escaping output, removing a secret)
-      -- straightforward fix
-    - **Security refactor** (restructuring auth flow, replacing a
-      vulnerable pattern) -- requires structural changes
-
-    For each finding report:
-    1. File and line number
-    2. Category (patch or security refactor)
-    3. What's wrong
-    4. Severity: critical / high / medium / low
-    5. Attack vector (if applicable)
-    6. Specific fix recommendation
-
-    If you notice issues outside the scoped files, list them separately
-    under "Out-of-scope observations" at the end.
-
-    Be thorough within scope. Check every listed file.
-    When done, send your complete findings to the team lead.
-    If you find ZERO in-scope issues, say so explicitly.
-```
+Spawned as `Explore` agent. Checks: input validation, error handling, injection vectors, auth/authz, secrets, data exposure, dependency risk, race conditions. Categorizes findings as **patch** or **security refactor**. Reports file, line, category, severity, attack vector, fix.
 
 #### Spec Auditor
 
-```
-Task tool (spawn teammate):
-  subagent_type: Explore
-  team_name: "<project>-harden"
-  name: "spec-auditor"
-  prompt: |
-    You are a spec auditor on the <project>-harden team.
-    Your name is spec-auditor.
-
-    Your job is to find gaps between implementation and spec/plan --
-    NOT fix them. You are read-only.
-
-    SCOPE: Only review the following files (modified in this session).
-    Do NOT flag issues in other files, even if you notice them.
-    Files to review:
-    <paste file list here>
-
-    Fresh-eyes start (mandatory): Before reporting findings, re-read all
-    listed changed code with "fresh eyes" and actively look for obvious
-    bugs, errors, confusing logic, brittle assumptions, and
-    implementation/spec mismatches before running the spec checklist.
-
-    Review each file against the spec/plan and check for:
-
-    1. Missing features -- spec requirements that have no corresponding
-       implementation
-    2. Incorrect behavior -- logic that contradicts what the spec
-       describes (wrong conditions, wrong outputs, wrong error handling)
-    3. Incomplete implementation -- features that are partially built
-       but missing edge cases, error paths, or configuration the spec
-       requires
-    4. Contract violations -- API shapes, response formats, status
-       codes, or error messages that don't match the spec
-    5. Test coverage -- untested code paths, missing edge case tests,
-       assertions that don't verify enough, happy-path-only testing
-    6. Acceptance criteria gaps -- spec conditions that aren't verified
-       by any test
-
-    For each finding, categorize as:
-    - **Missing** -- feature or behavior not implemented at all
-    - **Incorrect** -- implemented but wrong
-    - **Incomplete** -- partially implemented, gaps remain
-    - **Untested** -- implemented but no test coverage
-
-    For each finding report:
-    1. File and line number (or "N/A -- not implemented")
-    2. Category (missing, incorrect, incomplete, untested)
-    3. What the spec requires (quote or reference the spec)
-    4. What the implementation does (or doesn't do)
-    5. Severity: critical / high / medium / low
-
-    If you notice issues outside the scoped files, list them separately
-    under "Out-of-scope observations" at the end.
-
-    Be thorough within scope. Cross-reference every spec requirement.
-    When done, send your complete findings to the team lead.
-    If you find ZERO in-scope issues, say so explicitly.
-```
+Spawned as `Explore` agent. Checks: missing features, incorrect behavior, incomplete implementation, contract violations, test coverage, acceptance criteria gaps. Categorizes findings as **missing**, **incorrect**, **incomplete**, or **untested**. Reports file, line, category, spec reference, severity.
 
 ### 6. Process Audit Findings
 
@@ -365,9 +230,10 @@ If there are findings to fix:
 2. Spawn implementation agents (or reuse idle ones via SendMessage)
 3. Wait for fixes
 4. Run compile + test verification
-5. Check loop limits (see "Loop Limits and Exit Conditions")
-6. If not exiting: spawn audit agents again (fresh agents, not reused -- clean context)
-7. Repeat
+5. **Drift check (team lead):** Before the next audit round, re-read the intent frame and plan/task breakdown. Compare the current state of the work against the original scope. If audit findings are pulling the team into unrelated areas or the scope has expanded beyond what was framed, re-scope or exit the loop early and produce the summary.
+6. Check loop limits (see "Loop Limits and Exit Conditions")
+7. If not exiting: spawn audit agents again (fresh agents, not reused -- clean context)
+8. Repeat
 
 ### 8. Final Verification and Summary
 
@@ -407,7 +273,24 @@ Round 2:
 
 ### Out-of-scope observations
 - <any out-of-scope items auditors flagged, for future reference>
+
+### Learning loop
+learning_loop:
+  target_skill: "self-improvement"
+  candidates:
+    - pattern_key: "harden.input_validation"
+      auditor: "harden-auditor"
+      rounds_to_resolve: 1
+      severity: "high"
+      suggested_rule: "Validate and bound-check external inputs before use."
+    - pattern_key: "simplify.dead_code"
+      auditor: "simplify-auditor"
+      rounds_to_resolve: 1
+      severity: "low"
+      suggested_rule: "Remove dead code and unused imports before finalizing."
 ```
+
+Normalize recurring audit findings across rounds into `pattern_key` entries using the same format as `simplify-and-harden`. This feeds into `self-improvement` for cross-task pattern tracking and promotion.
 
 Adapt the format to your context. The goal is a clear record of what was found, what was fixed, what was skipped and why, and what remains.
 
@@ -446,23 +329,25 @@ More agents = more parallelism but more coordination overhead. For most tasks, 2
 ## Example: Implementing Spec Features
 
 ```
-1.  Read spec, identify 8 features to implement
-2.  TeamCreate: "feature-harden"
-3.  TaskCreate x8 (one per feature)
-4.  Spawn 3 impl agents, assign ~3 tasks each
-5.  Wait → all done → compile clean → tests pass
-6.  Collect modified file list (git diff --name-only)
-7.  Spawn 3 auditors: simplify-auditor, harden-auditor, spec-auditor
-8.  Simplify-auditor finds 4 cosmetic + 1 refactor proposal
-9.  Harden-auditor finds 2 patches + 1 security refactor
-10. Spec-auditor finds 1 missing feature
-11. Team lead evaluates refactors (approve security refactor,
+0.  Plan: Read spec (or run inline interview), break into 8 tasks
+0b. Emit Intent Frame #1, confirm with user
+1.  TeamCreate: "feature-harden"
+2.  TaskCreate x8 (one per feature)
+3.  Spawn 3 impl agents, assign ~3 tasks each
+4.  Wait → all done → compile clean → tests pass
+5.  Collect modified file list (git diff --name-only)
+6.  Spawn 3 auditors: simplify-auditor, harden-auditor, spec-auditor
+7.  Simplify-auditor finds 4 cosmetic + 1 refactor proposal
+8.  Harden-auditor finds 2 patches + 1 security refactor
+9.  Spec-auditor finds 1 missing feature
+10. Team lead evaluates refactors (approve security refactor,
     reject simplify refactor), creates fix + document tasks
-12. Spawn 2 impl agents for fixes
-13. Wait → compile clean → tests pass
+11. Spawn 2 impl agents for fixes
+12. Wait → compile clean → tests pass
+13. Drift check: re-read intent frame, scope looks good
 14. Round 2: Spawn 3 fresh auditors
 15. Auditors find 0 issues → exit condition met
-16. Produce hardening summary
+16. Produce hardening summary + learning loop output
 17. Shutdown agents, TeamDelete
 ```
 
@@ -474,3 +359,23 @@ These must pass before the loop can exit:
 2. Tests -- zero failures
 3. Exit condition met (clean audit, low-only round, or loop cap reached with critical/high findings resolved)
 4. No `// TODO` or `// FIXME` comments introduced without corresponding tasks
+
+## Interoperability with Other Skills
+
+### What this skill consumes
+- **From plan-interview (optional):** Plan file (`docs/plans/plan-NNN-<slug>.md`). When available, tasks are extracted from the implementation checklist. When absent, the team lead runs an inline planning phase.
+- **From the user (always available):** Task description, spec, or feature list. Used as the source of truth when no plan file exists.
+
+### What this skill produces
+- **For self-improvement:** Learning loop candidates from recurring audit findings, same `pattern_key` format as `simplify-and-harden`.
+- **For the user:** Hardening summary with full audit trail across all rounds.
+
+### Pipeline position
+
+This skill replaces stages 2–4 of the standard pipeline with a team-based loop:
+
+1. `plan-interview` (optional — or inline planning in Phase 0)
+2. **`agent-teams-simplify-and-harden`** (team lead + intent frame + implement + audit + drift checks + learning loop)
+3. `self-improvement` (consumes learning loop output for cross-task pattern tracking)
+
+The team lead runs its own intent frame (not consumed from `intent-framed-agent`) and lightweight context-surfing drift checks between rounds (not the full exit/handoff protocol). Sub-agents are short-lived and do not run pipeline skills.
