@@ -123,7 +123,7 @@ Before executing anything, scan the project for `.md` files that carry standing 
 
 ## Drift Detection
 
-Continuously monitor for these signals. Any single strong signal, or two weak ones together, means the wave is closing out.
+Continuously monitor for these signals. Strong signals trigger an immediate exit — the wave is closing out. Weak signals trigger the Recovery Protocol first — the shoulder might still be rideable.
 
 ### Strong signals (exit immediately)
 - The agent contradicts a decision it already made and committed to
@@ -131,7 +131,7 @@ Continuously monitor for these signals. Any single strong signal, or two weak on
 - The agent re-opens a scope question that was explicitly resolved in the plan
 - Output starts re-explaining the task rather than executing it
 
-### Weak signals (watch closely)
+### Weak signals (trigger recovery)
 - Responses are getting longer without getting more useful
 - Hedging language increases: "it depends", "could be", "might want to consider"
 - The agent switches approaches mid-task without explicit user direction
@@ -156,6 +156,34 @@ This is an inherent limitation of self-monitoring. Mitigate it with external gro
 
 The weak signals (hedging, verbosity) are more reliably self-detectable precisely because they're behavioral, not factual. Watch for those as early warnings.
 
+### Recovery Protocol (Wave Re-Anchor)
+
+When weak signals accumulate, don't exit immediately — try to re-anchor first. The shoulder of the wave is still rideable if you can re-ground.
+
+#### Step 1: Pause and re-read
+
+Stop producing output. Re-read the wave anchor verbatim:
+
+1. Open and read the intent frame artifact (not your memory of it)
+2. Open and read the relevant plan section
+3. If Entire CLI is available, read back your session log
+
+Compare what you're currently doing against what these artifacts say you should be doing.
+
+#### Step 2: Reconcile
+
+- **If the mismatch resolves** — you can trace a clear line from the anchor to your current work — resume execution. The weak signals were noise, not drift.
+- **If uncertainty remains** — you can't confidently reconcile your current work with the anchor — escalate to the user. Present the situation openly: *"I'm noticing some drift. Here's where I am vs where the plan says I should be — how should I proceed?"* Include the specific weak signals you observed and what you found when you re-read the anchor.
+- **If the user re-grounds you** — integrate their clarification and resume. The re-anchor succeeded.
+- **If the user can't resolve it, or the original intent has fundamentally changed** — proceed to the Exit Protocol.
+
+#### Re-anchor limits
+
+There is no hard cap on recovery attempts. Keep re-anchoring as long as each attempt genuinely resolves the uncertainty and the user confirms alignment. However:
+
+- If you find yourself re-anchoring on consecutive steps, that is itself a weak signal — the wave is flattening and a natural exit may be close.
+- Strong signals always bypass recovery and trigger an immediate exit. Recovery is only for the shoulder, never for the close-out.
+
 ---
 
 ## Riding the Wave
@@ -171,7 +199,7 @@ While context is healthy:
 
 ## Exit Protocol (Wave Close-Out)
 
-When drift is detected, execute a clean exit. Do not try to push through.
+When a strong signal fires, or the Recovery Protocol fails to re-anchor, execute a clean exit. Do not try to push through.
 
 ### Step 1: Stop executing
 
