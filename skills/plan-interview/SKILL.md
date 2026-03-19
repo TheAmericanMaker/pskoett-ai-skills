@@ -30,7 +30,7 @@ User calls `/plan-interview <task description>`.
 
 ### Phase 1: Upfront Interview (Before Exploration)
 
-Interview the user using `AskUserQuestion` in **thematic batches of 2-3 questions** when the provider supports it. For providers like GitHub Copilot without an AskUser tool, ask the same questions directly in chat and pause for responses before continuing.
+Check your available tools for `AskUserQuestion`. If it exists, use it to interview the user in **thematic batches of 2-3 questions** — this is the preferred method as it creates a structured prompt for the user to respond to. If `AskUserQuestion` is not available (e.g., GitHub Copilot or other providers without it), ask the same questions directly in chat and pause for responses before continuing.
 
 #### Required Question Domains
 
