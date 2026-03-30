@@ -26,6 +26,7 @@ Public skills (`skills/`):
 - `skills/simplify-and-harden/SKILL.md` - Post-completion simplify/harden quality pass for general agent sessions.
 - `skills/simplify-and-harden-ci/SKILL.md` - CI-only simplify/harden workflow using gh-aw.
 - `skills/agent-teams-simplify-and-harden/SKILL.md` - Parallel implementation and audit loop.
+- `skills/skill-pipeline/SKILL.md` - Pipeline orchestrator that classifies tasks and routes them through the right skill combination.
 
 Local Claude skills (`.claude/skills/`):
 - `.claude/skills/context-surfing/SKILL.md` - Local copy of the context-surfing workflow.
