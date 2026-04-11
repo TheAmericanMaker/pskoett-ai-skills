@@ -33,7 +33,7 @@ The blog says: "If a failure taught you something important, it should become a 
 
 From harness-updater or manually:
 - Pattern-Key of the promoted learning
-- The rule that was added to CLAUDE.md / AGENTS.md
+- The rule that was added to the project instruction files (CLAUDE.md, AGENTS.md, .github/copilot-instructions.md)
 - What to test (the assertion)
 - Verification method
 
@@ -44,8 +44,8 @@ From harness-updater or manually:
 id: eval-YYYYMMDD-NNN
 pattern-key: [from learning]
 source: [LRN-YYYYMMDD-001, ERR-YYYYMMDD-003]
-promoted-rule: "[the rule text in CLAUDE.md]"
-promoted-to: CLAUDE.md
+promoted-rule: "[the rule text in project instruction files]"
+promoted-to: CLAUDE.md  # or AGENTS.md, .github/copilot-instructions.md, or equivalent
 created: YYYY-MM-DD
 last-run: YYYY-MM-DD
 last-result: pass | fail | skip
@@ -84,7 +84,7 @@ expect_exit: 0
 ### file-check
 Verify a file or section exists:
 ```
-target: CLAUDE.md
+target: CLAUDE.md  # or AGENTS.md, .github/copilot-instructions.md
 section: "## Verification"
 expect: exists
 ```
@@ -92,7 +92,7 @@ expect: exists
 ### rule-check
 Verify a rule exists in an instruction file:
 ```
-target: CLAUDE.md
+target: CLAUDE.md  # or AGENTS.md, .github/copilot-instructions.md
 contains: "[the promoted rule text or key phrase]"
 expect: found
 ```
@@ -256,7 +256,7 @@ This requires Claude CLI access and is expensive. Use it for high-value skills o
 
 Two scenarios connect the outer loop to skill validation:
 
-1. **Harness-updater modifies a skill**: When a promoted rule is inserted into a SKILL.md (rather than CLAUDE.md), create a `skill-check` eval to verify the skill remains structurally valid after the edit.
+1. **Harness-updater modifies a skill**: When a promoted rule is inserted into a SKILL.md (rather than a project instruction file), create a `skill-check` eval to verify the skill remains structurally valid after the edit.
 
 2. **Self-improvement identifies a skill gap**: When learning-aggregator classifies a pattern as `skill_gap` and recommends "create a new skill", the new skill should pass `quick_validate.py` before being committed. Create a `skill-check` eval for it that persists as a regression test.
 

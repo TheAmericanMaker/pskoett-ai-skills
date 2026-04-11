@@ -121,7 +121,7 @@ strict: true
 3. Check cache-memory at `/tmp/gh-aw/cache-memory/eval-created-patterns.json` for patterns that already have eval cases. Skip duplicates.
 
 4. For each new candidate, determine the appropriate verification method:
-   - Knowledge gaps about conventions → `rule-check` (verify the rule exists in CLAUDE.md)
+   - Knowledge gaps about conventions → `rule-check` (verify the rule exists in project instruction files)
    - Input validation patterns → `grep-check` (search for unvalidated input patterns)
    - Tool/dependency patterns → `command-check` (run the relevant tool command)
    - File structure patterns → `file-check` (verify expected files/sections exist)

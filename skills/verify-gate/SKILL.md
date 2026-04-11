@@ -27,14 +27,14 @@ This is the inner loop's **verify** step. Without it, the agent hands off code w
 
 Read the project's configuration to find verification commands. Check these sources in order:
 
-1. **CLAUDE.md** — look for a `## Verification` or `## Test Commands` section
+1. **Project instruction files** (CLAUDE.md, AGENTS.md, .github/copilot-instructions.md) — look for a `## Verification` or `## Test Commands` section
 2. **package.json** — `scripts.test`, `scripts.lint`, `scripts.typecheck`, `scripts.build`
 3. **Makefile** / **Justfile** — `test`, `lint`, `check`, `build` targets
 4. **Cargo.toml** — `cargo build`, `cargo test`, `cargo clippy`
 5. **pyproject.toml** / **setup.cfg** — `pytest`, `mypy`, `ruff`
 6. **go.mod** — `go build ./...`, `go test ./...`, `go vet ./...`
 
-If no commands are discoverable, ask the user once and suggest they add a `## Verification` section to CLAUDE.md for future sessions:
+If no commands are discoverable, ask the user once and suggest they add a `## Verification` section to their project instruction files (CLAUDE.md, AGENTS.md, or equivalent) for future sessions:
 
 ```markdown
 ## Verification
@@ -150,7 +150,7 @@ If the fix loop resolves an error that was non-obvious, log it:
 
 ## Configuration
 
-If the project has a `.verify-gate.yml` or a `verify-gate` section in CLAUDE.md:
+If the project has a `.verify-gate.yml` or a `verify-gate` section in its project instruction files (CLAUDE.md, AGENTS.md, or equivalent):
 
 ```yaml
 verify-gate:

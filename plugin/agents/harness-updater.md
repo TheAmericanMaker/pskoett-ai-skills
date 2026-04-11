@@ -20,7 +20,7 @@ For each promotion candidate:
 ### 1. Verify the pattern is still relevant
 
 - Check if the Related Files still exist
-- Check if CLAUDE.md / AGENTS.md already has a rule covering this pattern
+- Check if project instruction files (CLAUDE.md, AGENTS.md, .github/copilot-instructions.md) already have a rule covering this pattern
 - If already covered: mark as `promoted` in `.learnings/` and skip
 - If files were removed: mark as `dismissed` and skip
 
@@ -56,7 +56,7 @@ Good: "Run migrations against a test database before applying to staging. The OR
 
 Update the source entry in `.learnings/LEARNINGS.md` or `.learnings/ERRORS.md`:
 - Set `**Status**: promoted`
-- Add `Promoted-To: CLAUDE.md` (or whichever file)
+- Add `Promoted-To: CLAUDE.md` (or AGENTS.md, .github/copilot-instructions.md — whichever file received the rule)
 - Add `Promoted-Date: YYYY-MM-DD`
 
 ### 6. Flag eval candidate

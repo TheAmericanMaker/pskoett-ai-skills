@@ -38,7 +38,7 @@ CI agents do not have session context. They cannot see what the user is currentl
 
 Hard rules for headless execution:
 
-1. **Read-only** — do not modify `.learnings/` files, CLAUDE.md, or any repo files
+1. **Read-only** — do not modify `.learnings/` files, project instruction files (CLAUDE.md, AGENTS.md, .github/copilot-instructions.md), or any repo files
 2. **Headless** — no interactive prompts, no approval gates
 3. **Structured output** — emit findings as YAML under `learning_aggregator_ci` key
 4. **Single comment** — post one consolidated comment per run, not per finding
@@ -100,7 +100,7 @@ learning_aggregator_ci:
         - "LRN-20260301-001: Missing bounds check on pagination params"
         - "ERR-20260308-002: Unconstrained string length caused OOM"
         - "LRN-20260315-003: API params not validated before DB query"
-      recommended_action: "Add to CLAUDE.md: Always validate and bound-check external inputs before use"
+      recommended_action: "Add to project instruction files: Always validate and bound-check external inputs before use"
       eval_candidate: true
   approaching:
     - pattern_key: "simplify.dead_code"

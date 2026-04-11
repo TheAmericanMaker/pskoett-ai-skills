@@ -77,7 +77,7 @@ For each promotion candidate, classify the gap type:
 
 | Gap Type | Signal | Fix Target |
 |----------|--------|------------|
-| **Knowledge gap** | Agent didn't know X | Update CLAUDE.md or skill instructions |
+| **Knowledge gap** | Agent didn't know X | Update project instruction files (CLAUDE.md, AGENTS.md, .github/copilot-instructions.md) |
 | **Tool gap** | Agent improvised around missing capability | Add or update MCP tool / script |
 | **Skill gap** | Same behavior pattern keeps failing | Create or update a skill (use `/skill-creator`, validate with `quick_validate.py`, register `skill-check` eval) |
 | **Ambiguity** | Conflicting interpretations of spec/prompt | Tighten instructions or add examples |
@@ -111,7 +111,7 @@ Output a structured report:
   - [LRN-YYYYMMDD-001] Summary of first occurrence
   - [LRN-YYYYMMDD-002] Summary of second occurrence
   - [ERR-YYYYMMDD-001] Summary of related error
-- **Recommended action:** Add rule to CLAUDE.md: "[concise prevention rule]"
+- **Recommended action:** Add rule to project instruction files (CLAUDE.md, AGENTS.md, .github/copilot-instructions.md): "[concise prevention rule]"
 - **Eval candidate:** Yes — [description of what to test]
 
 #### 2. ...
@@ -137,7 +137,7 @@ Output a structured report:
 
 The gap report feeds into:
 
-1. **harness-updater agent** — takes promotion-ready patterns and applies them to CLAUDE.md / AGENTS.md
+1. **harness-updater agent** — takes promotion-ready patterns and applies them to project instruction files (CLAUDE.md, AGENTS.md, .github/copilot-instructions.md)
 2. **eval-creator skill** — takes eval candidates and creates permanent test cases
 3. **Human review** — for patterns classified as "reasoning failure" or "ambiguity" (these need human judgment)
 
@@ -153,7 +153,7 @@ By default, reads `.learnings/` from the working directory. When `repo-memory` i
 
 ### Tracker-id in gap reports
 
-Each promotion candidate in the gap report includes a `tracker` field set to the pattern-key. This tracker propagates through the full chain: harness-updater embeds it as a comment in CLAUDE.md, eval-creator references it in eval cases. To audit the full lifecycle of a pattern, search for `tracker:[pattern-key]` across the repo and GitHub.
+Each promotion candidate in the gap report includes a `tracker` field set to the pattern-key. This tracker propagates through the full chain: harness-updater embeds it as a comment in project instruction files, eval-creator references it in eval cases. To audit the full lifecycle of a pattern, search for `tracker:[pattern-key]` across the repo and GitHub.
 
 ## What This Skill Does NOT Do
 
