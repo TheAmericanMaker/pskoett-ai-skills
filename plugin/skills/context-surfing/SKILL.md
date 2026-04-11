@@ -8,6 +8,12 @@ description: >
   Especially important for long-running tasks, complex refactors, or any work where degraded context would silently
   corrupt the output. Trigger even if the user doesn't say "context surfing" — if an agent task is running across
   multiple steps with intent and a plan already established, this skill is live.
+hooks:
+  SessionStart:
+    - matcher: ""
+      hooks:
+        - type: command
+          command: "./scripts/handoff-checker.sh"
 ---
 
 # Context Surfing

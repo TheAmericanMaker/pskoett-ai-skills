@@ -6,25 +6,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/skills/self-improvement/scripts/activator.sh"
-          },
-          {
-            "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/scripts/entire-wrapper.sh hooks claude-code user-prompt-submit"
           }
         ]
       }
     ],
     "PostToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/skills/self-improvement/scripts/error-detector.sh"
-          }
-        ]
-      },
       {
         "matcher": "Task",
         "hooks": [
@@ -59,10 +46,6 @@
       {
         "matcher": "",
         "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/skills/context-surfing/scripts/handoff-checker.sh"
-          },
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/scripts/entire-wrapper.sh hooks claude-code session-start"

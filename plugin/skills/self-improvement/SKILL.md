@@ -1,6 +1,17 @@
 ---
 name: self-improvement
 description: "Captures learnings, errors, and corrections to enable continuous improvement. Use when: (1) A command or operation fails unexpectedly, (2) User corrects Claude ('No, that's wrong...', 'Actually...'), (3) User requests a capability that doesn't exist, (4) An external API or tool fails, (5) Claude realizes its knowledge is outdated or incorrect, (6) A better approach is discovered for a recurring task. Also review learnings before major tasks. For CI-only/headless learning capture, use self-improvement-ci."
+hooks:
+  UserPromptSubmit:
+    - matcher: ""
+      hooks:
+        - type: command
+          command: "./scripts/activator.sh"
+  PostToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: "./scripts/error-detector.sh"
 ---
 
 # Self-Improvement Skill
@@ -487,55 +498,4 @@ Before extraction, verify:
 
 ## Multi-Agent Support
 
-This skill works across different AI coding agents with agent-specific activation.
-
-### Claude Code
-
-**Activation**: Hooks (UserPromptSubmit, PostToolUse)
-**Setup**: `.claude/settings.json` with hook configuration
-**Detection**: Automatic via hook scripts
-
-### Codex CLI
-
-**Activation**: Hooks (same pattern as Claude Code)
-**Setup**: `.codex/settings.json` with hook configuration
-**Detection**: Automatic via hook scripts
-
-### GitHub Copilot
-
-**Activation**: Manual (no hook support)
-**Setup**: Add to `.github/copilot-instructions.md`:
-
-```markdown
-## Self-Improvement
-
-After solving non-obvious issues, consider logging to `.learnings/`:
-1. Use format from self-improvement skill
-2. Link related entries with See Also
-3. Promote high-value learnings to skills
-
-Ask in chat: "Should I log this as a learning?"
-```
-
-**Detection**: Manual review at session end
-
-### Agent-Agnostic Guidance
-
-Regardless of agent, apply self-improvement when you:
-
-1. **Discover something non-obvious** - solution wasn't immediate
-2. **Correct yourself** - initial approach was wrong
-3. **Learn project conventions** - discovered undocumented patterns
-4. **Hit unexpected errors** - especially if diagnosis was difficult
-5. **Find better approaches** - improved on your original solution
-
-### Copilot Chat Integration
-
-For Copilot users, add this to your prompts when relevant:
-
-> After completing this task, evaluate if any learnings should be logged to `.learnings/` using the self-improvement skill format.
-
-Or use quick prompts:
-- "Log this to learnings"
-- "Create a skill from this solution"
-- "Check .learnings/ for related issues"
+This skill works across different AI coding agents. See [references/multi-agent-support.md](references/multi-agent-support.md) for agent-specific activation guides (Claude Code, Codex CLI, GitHub Copilot).
