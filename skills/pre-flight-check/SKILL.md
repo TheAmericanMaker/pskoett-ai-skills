@@ -1,12 +1,6 @@
 ---
 name: pre-flight-check
-description: "Session-start scan that surfaces relevant learnings, recent errors, and eval status before work begins. Bridges the outer loop back into the inner loop by making accumulated knowledge visible at task start. Activated via SessionStart hook or manually before major tasks."
-hooks:
-  SessionStart:
-    - matcher: ""
-      hooks:
-        - type: command
-          command: "./scripts/pre-flight.sh"
+description: "[Beta] Session-start scan that surfaces relevant learnings, recent errors, and eval status before work begins. Bridges the outer loop back into the inner loop by making accumulated knowledge visible at task start. Activated via SessionStart hook or manually before major tasks."
 ---
 
 # Pre-Flight Check

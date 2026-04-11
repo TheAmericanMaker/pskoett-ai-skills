@@ -1,8 +1,6 @@
 ---
 name: eval-creator
-description: "Creates permanent eval cases from promoted learnings and runs regression checks against them. Turns failures into test cases that prevent silent regression. This is the outer loop's regress-test step. Use when a learning is promoted and has a clear pass/fail condition, or on cadence to verify promoted rules still hold."
-user-invocable: true
-argument-hint: "[create | run | list] [--pattern-key KEY]"
+description: "[Beta] Creates permanent eval cases from promoted learnings and runs regression checks against them. Turns failures into test cases that prevent silent regression. This is the outer loop's regress-test step. Use when a learning is promoted and has a clear pass/fail condition, or on cadence to verify promoted rules still hold."
 ---
 
 # Eval Creator

@@ -1,8 +1,6 @@
 ---
 name: verify-gate
 description: "Runs project compile, test, and lint commands between implementation and quality review. Gates simplify-and-harden behind machine verification. If checks fail, routes back to implementation with diagnostics for a fix loop. If checks pass, signals ready for the quality pass. Use after any implementation work completes and before simplify-and-harden. Essential for the inner loop's verify step."
-user-invocable: true
-argument-hint: "[--skip-lint] [--skip-types] [--fix-limit N]"
 ---
 
 # Verify Gate

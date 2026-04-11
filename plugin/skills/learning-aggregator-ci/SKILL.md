@@ -1,6 +1,6 @@
 ---
 name: learning-aggregator-ci
-description: "CI-only learning aggregation workflow using gh-aw (GitHub Agentic Workflows). Scans .learnings/ files on a schedule, groups entries by pattern_key, identifies promotion-ready patterns, and posts a gap report as a PR or issue comment. Use when: you want automated cross-session pattern detection in CI/headless pipelines without interactive prompts. For interactive use, use learning-aggregator."
+description: "[Beta] CI-only learning aggregation workflow using gh-aw (GitHub Agentic Workflows). Scans .learnings/ files on a schedule, groups entries by pattern_key, identifies promotion-ready patterns, and posts a gap report as a PR or issue comment. Use when: you want automated cross-session pattern detection in CI/headless pipelines without interactive prompts. For interactive use, use learning-aggregator."
 ---
 
 # Learning Aggregator CI
