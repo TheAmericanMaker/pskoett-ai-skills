@@ -26,6 +26,11 @@ tools:
   github:
     toolsets: [pull_requests, actions]
   cache-memory: true
+  # Optional: durable git-branch persistence for eval run history and the
+  # created-pattern ledger. Survives beyond the 7-day cache-memory window.
+  repo-memory:
+    branch-name: learnings/eval-state
+    max-file-size: 51200
 
 safe-outputs:
   add-comment:
@@ -98,6 +103,11 @@ tools:
   github:
     toolsets: [pull_requests, actions, issues]
   cache-memory: true
+  # Optional: durable git-branch persistence for the created-pattern ledger
+  # so newly-promoted patterns aren't re-created on every scheduled run.
+  repo-memory:
+    branch-name: learnings/eval-state
+    max-file-size: 51200
 
 safe-outputs:
   add-comment:

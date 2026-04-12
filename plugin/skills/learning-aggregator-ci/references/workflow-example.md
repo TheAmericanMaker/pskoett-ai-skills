@@ -27,6 +27,12 @@ tools:
   github:
     toolsets: [pull_requests, actions, issues]
   cache-memory: true
+  # Optional: durable git-branch persistence for the aggregation state.
+  # Survives beyond the 7-day cache-memory window and is readable from interactive
+  # sessions via `git fetch origin learnings/default` (branch name = branch-prefix/default).
+  repo-memory:
+    branch-prefix: learnings
+    max-file-size: 51200  # 50KB — aggregation state can be larger than default 10KB
 
 safe-outputs:
   add-comment:

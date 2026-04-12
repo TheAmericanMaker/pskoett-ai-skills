@@ -215,11 +215,9 @@ mcp-scripts:
 
 Reference the script in an eval case as `verification_method: script-check` with the mcp-script name. This is an extension point — the built-in methods cover most cases, but mcp-scripts handle project-specific behavioral assertions.
 
-## Persistence — Extension Point
+## Persistence
 
-> repo-memory is a gh-aw feature for durable cross-environment storage. This plugin works without it — .evals/ in the working directory is the default.
-
-By default, eval cases live in `.evals/` in the working directory. For teams using `repo-memory`, eval cases can be stored on a memory branch — making them available across environments and surviving ephemeral workspace teardown.
+Eval cases live in `.evals/` in the working directory. This interactive skill does not integrate with external memory backends. For CI-side durable storage that survives across workflow runs, see `eval-creator-ci`, which can optionally back its run history and created-pattern ledger with gh-aw's `repo-memory`.
 
 ## Skill Validation (skill-check)
 

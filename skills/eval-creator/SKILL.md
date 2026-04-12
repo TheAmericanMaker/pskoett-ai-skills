@@ -213,7 +213,7 @@ Reference the script in an eval case as `verification_method: script-check` with
 
 ## Persistence
 
-By default, eval cases live in `.evals/` in the working directory. For teams using `repo-memory`, eval cases can be stored on a memory branch — making them available across environments and surviving ephemeral workspace teardown.
+Eval cases live in `.evals/` in the working directory. The skill does not integrate with external memory backends in interactive sessions. For CI-side durable storage, see `eval-creator-ci`, which can optionally back its run history with gh-aw's `repo-memory`.
 
 ## Skill Validation (skill-check)
 

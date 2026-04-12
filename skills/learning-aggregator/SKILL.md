@@ -258,7 +258,7 @@ The default implementation targets Entire (v0.5.4+) via the `entire rewind --lis
 
 ## Persistence
 
-By default, reads `.learnings/` from the working directory. When `repo-memory` is configured, reads from the memory branch instead — giving a complete view across all environments and sessions, even in fresh clones or ephemeral workspaces.
+Reads `.learnings/` from the working directory. This is the only persistence mode — the skill does not integrate with external memory backends in interactive sessions. For CI-side durable storage across workflow runs, see `learning-aggregator-ci`, which can optionally back its state with gh-aw's `repo-memory` (git-branch persistence). The resulting branch is a normal git branch and can be fetched locally if desired, but the interactive skill itself only reads local files.
 
 ### Tracker-id in gap reports
 

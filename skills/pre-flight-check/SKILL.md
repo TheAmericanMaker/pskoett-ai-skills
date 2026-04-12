@@ -116,13 +116,9 @@ Outer loop improves harness → pre-flight surfaces improvements → inner loop 
 
 Every learning captured, every rule promoted, every eval created becomes visible at the next session start. The knowledge gaps get smaller with every cycle.
 
-## Incremental Scanning (cache)
+## Incremental Scanning (future enhancement)
 
-The hook script can use a local cache file (`.pre-flight-cache.json`) to store last-known state: entry counts, scan date, high-priority items. On the next session start, it only re-scans entries newer than the cached state.
-
-This enables **delta reporting**: "Since your last session, 2 new errors were logged and 1 pattern crossed the promotion threshold." More actionable than static counts, and near-instant regardless of how large `.learnings/` grows.
-
-When `repo-memory` is configured (see self-improvement), pre-flight-check reads from the memory branch — making prior learnings available even in fresh Codespaces or ephemeral environments.
+The hook script can be extended to use a local cache file (`.pre-flight-cache.json`) storing last-known state — entry counts, scan date, high-priority items — so the next session start only re-scans entries newer than the cached state. This would enable **delta reporting** ("since your last session, 2 new errors were logged and 1 pattern crossed the promotion threshold") and keep the hook near-instant regardless of how large `.learnings/` grows. Not implemented today — the current hook scans directly on every session start.
 
 ## What This Skill Does NOT Do
 

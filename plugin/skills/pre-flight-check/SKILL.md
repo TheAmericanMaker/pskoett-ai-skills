@@ -122,15 +122,24 @@ Outer loop improves harness → pre-flight surfaces improvements → inner loop 
 
 Every learning captured, every rule promoted, every eval created becomes visible at the next session start. The knowledge gaps get smaller with every cycle.
 
-## Incremental Scanning — Extension Point
+## Intentional Scope: What This Does NOT Duplicate
 
-> Cache-based incremental scanning and repo-memory support are future enhancements. The current hook script scans .learnings/ directly on every session start.
+Claude Code already auto-loads `CLAUDE.md` (all tiers, concatenated up the directory tree) and the first ~25KB of `~/.claude/projects/<project>/memory/MEMORY.md` at every session start. **This skill does not re-surface them** — that would waste tokens on content the agent already has in context.
 
-The hook script can use a local cache file (`.pre-flight-cache.json`) to store last-known state: entry counts, scan date, high-priority items. On the next session start, it only re-scans entries newer than the cached state.
+Pre-flight-check focuses exclusively on things that are **not** auto-loaded:
 
-This enables **delta reporting**: "Since your last session, 2 new errors were logged and 1 pattern crossed the promotion threshold." More actionable than static counts, and near-instant regardless of how large `.learnings/` grows.
+| Surfaced | Not surfaced (already loaded by Claude Code) |
+|----------|---------------------------------------------|
+| `.learnings/*.md` — structured learning entries | `CLAUDE.md` at any tier |
+| `.evals/EVAL_INDEX.md` — failed / stale evals | `MEMORY.md` (first 25KB auto-loaded) |
+| `.context-surfing/handoff-*.md` — unread handoffs | `.claude/rules/*.md` |
+| Promotion-ready count (needs learning-aggregator run) | Subdirectory `CLAUDE.md` that the agent has already touched |
 
-When `repo-memory` is configured (see self-improvement), pre-flight-check reads from the memory branch — making prior learnings available even in fresh Codespaces or ephemeral environments.
+If you want the agent to see content from `CLAUDE.md` or `MEMORY.md`, you don't need this skill — Claude Code handles it. If you want it to see content from `.learnings/` or `.evals/`, that's what this skill is for.
+
+## Incremental Scanning (future enhancement)
+
+The hook script can be extended to use a local cache file (`.pre-flight-cache.json`) storing last-known state — entry counts, scan date, high-priority items — so the next session start only re-scans entries newer than the cached state. This would enable **delta reporting** ("since your last session, 2 new errors were logged and 1 pattern crossed the promotion threshold") and keep the hook near-instant regardless of how large `.learnings/` grows. Not implemented today — the current hook scans directly on every session start.
 
 ## What This Skill Does NOT Do
 

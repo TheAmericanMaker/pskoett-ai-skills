@@ -26,6 +26,11 @@ tools:
   github:
     toolsets: [pull_requests, actions]
   cache-memory: true
+  # Optional: durable git-branch persistence for eval run history and the
+  # created-pattern ledger. Survives beyond the 7-day cache-memory window.
+  repo-memory:
+    branch-name: learnings/eval-state
+    max-file-size: 51200
 
 safe-outputs:
   add-comment:
@@ -98,6 +103,11 @@ tools:
   github:
     toolsets: [pull_requests, actions, issues]
   cache-memory: true
+  # Optional: durable git-branch persistence for the created-pattern ledger
+  # so newly-promoted patterns aren't re-created on every scheduled run.
+  repo-memory:
+    branch-name: learnings/eval-state
+    max-file-size: 51200
 
 safe-outputs:
   add-comment:
@@ -121,7 +131,7 @@ strict: true
 3. Check cache-memory at `/tmp/gh-aw/cache-memory/eval-created-patterns.json` for patterns that already have eval cases. Skip duplicates.
 
 4. For each new candidate, determine the appropriate verification method:
-   - Knowledge gaps about conventions → `rule-check` (verify the rule exists in CLAUDE.md)
+   - Knowledge gaps about conventions → `rule-check` (verify the rule exists in project instruction files)
    - Input validation patterns → `grep-check` (search for unvalidated input patterns)
    - Tool/dependency patterns → `command-check` (run the relevant tool command)
    - File structure patterns → `file-check` (verify expected files/sections exist)

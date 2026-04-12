@@ -496,19 +496,29 @@ Before extraction, verify:
 - [ ] No project-specific hardcoded values
 - [ ] Follows skill naming conventions (lowercase, hyphens)
 
-## Persistence Options — Extension Point
+## Persistence
 
-> repo-memory is a gh-aw feature for durable cross-environment storage. This plugin works without it — .learnings/ in the working directory is the default.
+Learning entries are stored as files in `.learnings/` in the working directory. This is the primary store — structured, VCS-shareable, and the durable record of what this skill has captured.
 
-By default, learning entries are stored as files in `.learnings/` in the working directory. This works for persistent machines but breaks in ephemeral environments (Codespaces, CI runners, worktrees).
+### Claude Code Memory Integration
 
-### repo-memory (recommended for teams)
+Claude Code has two native memory systems that are **already auto-loaded at session start**, which this skill takes advantage of:
 
-For teams or multi-environment workflows, back `.learnings/` with a git branch using gh-aw's `repo-memory`. Learning entries get git commits with full audit trail, survive across environments, and are accessible to any clone or fork.
+| System | Path | Auto-loaded | Used by this skill |
+|--------|------|-------------|-------------------|
+| **CLAUDE.md tiers** | `./CLAUDE.md`, `./CLAUDE.local.md`, `~/.claude/CLAUDE.md`, `./.claude/CLAUDE.md` | Full file, concatenated up the directory tree | **Promotion target** — when a learning crosses the threshold, this skill promotes it here |
+| **`.claude/rules/*.md`** | `./.claude/rules/`, `~/.claude/rules/` | Loaded at launch, path-scoped via YAML frontmatter | **Promotion target** for path-scoped rules |
+| **Auto memory** | `~/.claude/projects/<project>/memory/MEMORY.md` + topic files | `MEMORY.md` first 25KB auto-loaded | Managed by Claude Code itself — do not edit `MEMORY.md` directly |
 
-When `repo-memory` is configured, this skill writes to both `.learnings/` (local cache) and the memory branch (durable store). `learning-aggregator` and `pre-flight-check` read from the memory branch when available, falling back to local files.
+**The key insight**: because CLAUDE.md is auto-loaded by Claude Code at every session start, a rule promoted from `.learnings/` to `CLAUDE.md` becomes visible to Claude **next session without any skill needing to re-surface it**. This is why the promotion flow (`.learnings/` → `CLAUDE.md`) works — the target file is automatically in context.
 
-To enable: add `repo-memory: true` to the gh-aw workflow config, or set `LEARNING_STORE=repo-memory` in your environment.
+**When to write to auto memory instead**: if a learning is truly personal-machine (not VCS-shareable) and Claude-specific, write a **sibling topic file** under `~/.claude/projects/<project>/memory/<topic>.md`. Do NOT edit `MEMORY.md` directly — it's owned by Claude Code's auto-memory subsystem and concurrent writes will conflict. The `InstructionsLoaded` hook fires when memory files load if you need observability.
+
+### CI-side memory (for completeness)
+
+For CI workflows, the `self-improvement-ci` and `learning-aggregator-ci` variants can use gh-aw's `repo-memory` (git-branch persistence) or `cache-memory` (Actions cache). Those are CI-only features and not accessible from this interactive skill.
+
+**Note on Copilot Memory:** GitHub Copilot CLI has a built-in memory feature that improves its own responses within Copilot sessions. It currently has no public API, so external skills can't read or write to it. Not a blocker — Copilot CLI benefits from its own memory automatically.
 
 ## Multi-Agent Support
 

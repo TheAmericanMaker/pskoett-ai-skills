@@ -243,11 +243,13 @@ Patterns in both sources are highest confidence. Patterns only in `.learnings/` 
 
 Default target: Entire v0.5.4+ via `entire rewind --list` and `entire explain`. The concept is source-agnostic — any tool exposing checkpoint lists and transcript reads can serve as a trace source. Custom adapters can live in `scripts/` or via gh-aw `mcp-scripts`.
 
-## Persistence — Extension Point
+## Persistence
 
-> repo-memory is a gh-aw feature for durable cross-environment storage. This skill works without it — reads .learnings/ from the working directory by default.
+Reads `.learnings/` from the working directory. The interactive skill does not integrate with external memory backends — `.learnings/` is the source of truth.
 
-By default, reads `.learnings/` from the working directory. When `repo-memory` is configured, reads from the memory branch instead — giving a complete view across all environments and sessions, even in fresh clones or ephemeral workspaces.
+**The promotion path is already wired up**: when harness-updater acts on this skill's gap report, it writes rules to `CLAUDE.md` (or `AGENTS.md` / `.claude/rules/`). Claude Code **auto-loads those files at every session start**, so a promoted rule becomes part of the agent's context on the next session without any additional surfacing. No hook or pre-load needed — the target files are already in the auto-load set.
+
+For CI-side durable storage across workflow runs, see `learning-aggregator-ci`, which can optionally back its state with gh-aw's `repo-memory`. The resulting `learnings/default` branch is a normal git branch and can be fetched locally if desired, but this skill itself only reads local files.
 
 ### Tracker-id in gap reports
 
