@@ -28,11 +28,12 @@ This is the inner loop's **verify** step. Without it, the agent hands off code w
 Read the project's configuration to find verification commands. Check these sources in order:
 
 1. **Project instruction files** (CLAUDE.md, AGENTS.md, .github/copilot-instructions.md) — look for a `## Verification` or `## Test Commands` section
-2. **package.json** — `scripts.test`, `scripts.lint`, `scripts.typecheck`, `scripts.build`
+2. **package.json** — `scripts.test`, `scripts.lint`, `scripts.typecheck`, `scripts.build`. Also check for a `bun.lock` / `bun.lockb` alongside it → prefer `bun run <script>` over `npm run <script>` when present. Check for `pnpm-lock.yaml` → prefer `pnpm run`. Check for `yarn.lock` → prefer `yarn`.
 3. **Makefile** / **Justfile** — `test`, `lint`, `check`, `build` targets
 4. **Cargo.toml** — `cargo build`, `cargo test`, `cargo clippy`
 5. **pyproject.toml** / **setup.cfg** — `pytest`, `mypy`, `ruff`
 6. **go.mod** — `go build ./...`, `go test ./...`, `go vet ./...`
+7. **deno.json** / **deno.jsonc** — `deno task <name>` for any defined tasks
 
 If no commands are discoverable, ask the user once and suggest they add a `## Verification` section to their project instruction files (CLAUDE.md, AGENTS.md, or equivalent) for future sessions:
 
