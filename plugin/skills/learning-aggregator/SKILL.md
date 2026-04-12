@@ -148,6 +148,100 @@ The gap report feeds into:
 - `--since YYYY-MM-DD` — only scan entries after this date
 - `--min-recurrence N` — raise the promotion threshold
 - `--area AREA` — filter to a specific area (frontend, backend, etc.)
+- `--deep` — also analyze session traces via Entire (see Session Trace Analysis below)
+
+## Session Trace Analysis
+
+Two-source outer loop: `.learnings/` (hot path, every session) + Entire session traces (cold path, cadenced).
+
+| Source | What it captures | Cadence | Cost |
+|--------|-----------------|---------|------|
+| `.learnings/` | Claude's explicit self-reflections during sessions (what it noticed and logged) | Every session | Near-zero |
+| Entire traces | Full session transcripts — prompts, tool calls, retries, corrections, token usage | Weekly or on-demand | Expensive |
+
+The default mode reads `.learnings/` only. The `--deep` mode adds trace analysis and merges findings.
+
+### Why both sources matter
+
+`.learnings/` captures what Claude **chose to log** — a curated subset. Entire captures **everything that happened**. Patterns visible in traces but missed in `.learnings/`:
+
+- **Retry loops** — same tool call repeated 3+ times with small variations
+- **Silent user corrections** — user said "no, that's wrong" mid-flow, Claude corrected without logging
+- **Worked-around failures** — test failed, Claude changed approach, original failure forgotten
+- **Context handoff triggers** — which drift signals actually fired, not just that handoffs happened
+- **Token/time anomalies** — disproportionate cost vs output
+
+These are high-value because Claude can't self-report them — it doesn't know they're failures.
+
+### When to trigger --deep
+
+Trace analysis is cadenced, never per-session:
+
+- **Weekly** (recommended minimum)
+- **Post-incident** — investigate what actually happened
+- **Pre-promotion** — verify a pattern really recurs in real sessions
+- **Manual** — `/learning-aggregator --deep --since 7d`
+
+Per-session reads would burn tokens without new signal. Cross-session patterns only emerge over multiple sessions.
+
+### Reading traces with Entire
+
+```bash
+# Availability check
+entire --version
+
+# List checkpoints as JSON
+entire rewind --list
+
+# Read a checkpoint's transcript
+entire explain --checkpoint <id> --full --no-pager
+
+# Raw JSONL
+entire explain --checkpoint <id> --raw-transcript --no-pager
+
+# Filter by session
+entire explain --session <session-id-prefix>
+```
+
+If `entire` is missing or the repo doesn't have Entire enabled, `--deep` falls back to `.learnings/`-only mode and reports the limitation.
+
+### Trace extraction targets
+
+For each checkpoint in the window:
+
+1. **Tool call repetition** → `retry-loop.<tool>`
+2. **User correction markers** ("no", "wrong", "actually", "instead" after agent action) → `correction.<area>`
+3. **Error patterns in tool output** (same regex set as error-detector.sh) → `error.<category>`
+4. **Drift signals from context-surfing exits** → `drift.<signal>`
+5. **Approach changes mid-task** → `approach-switch.<domain>`
+6. **Token anomalies** (>2x median for task type) → `cost.<task-type>`
+
+Findings are normalized to the self-improvement taxonomy (`harden.input_validation`, `simplify.dead_code`, etc.) where possible.
+
+### Merged gap report format
+
+```yaml
+promotion_ready:
+  - pattern_key: "harden.input_validation"
+    recurrence_count: 5
+    sources:
+      - .learnings/LEARNINGS.md (3 entries)
+      - entire:traces (5 occurrences across 4 sessions)
+    confidence: high  # in both sources
+    evidence:
+      - "LRN-20260401-001: Missing bounds check on pagination"
+      - "entire:1ca16f9b: Retry loop on /api/search — pageSize rejected 4x"
+      - "entire:8bf2e4cd: User correction 'validate before DB query'"
+    entire_checkpoints:
+      - 1ca16f9bb3801ee2a02f2384f31355a54b81ea00
+      - 8bf2e4cd63d01040b38df07c43f73e0f15d05ac9
+```
+
+Patterns in both sources are highest confidence. Patterns only in `.learnings/` may be over-logged. Patterns only in traces may be noise. The overlap is where the signal is strongest.
+
+### Compatibility
+
+Default target: Entire v0.5.4+ via `entire rewind --list` and `entire explain`. The concept is source-agnostic — any tool exposing checkpoint lists and transcript reads can serve as a trace source. Custom adapters can live in `scripts/` or via gh-aw `mcp-scripts`.
 
 ## Persistence — Extension Point
 
@@ -166,3 +260,5 @@ Each promotion candidate in the gap report includes a `tracker` field set to the
 - Does not create evals (that's eval-creator)
 - Does not fix code or run tests
 - Does not replace human judgment for ambiguous patterns
+- Does not run `--deep` trace analysis per-session — only on cadence or explicit invocation
+- Does not require Entire — falls back to `.learnings/`-only mode when trace source is unavailable
