@@ -11,7 +11,7 @@
   "plugins": [
     {
       "name": "pskoett-ai-skills",
-      "source": "./copilot-plugin",
+      "source": "./plugin/.copilot-plugin",
       "description": "Two-loop skill pipeline for GitHub Copilot CLI. Inner loop (plan-interview, intent-framed-agent, context-surfing, verify-gate, simplify-and-harden) catches failures in-session. Outer loop (learning-aggregator, harness-updater, eval-creator, pre-flight-check) captures recurring patterns, promotes them to AGENTS.md as permanent rules, and turns failures into regression tests. The harness gets stronger with every cycle.",
       "version": "2.0.0",
       "license": "MIT",

@@ -1,1 +1,0 @@
-../../plugin/agents/spec-auditor.md

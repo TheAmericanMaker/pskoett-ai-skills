@@ -44,14 +44,14 @@ Codex reads the marketplace from `.agents/plugins/marketplace.json` and the plug
 
 ### GitHub Copilot CLI
 
-The same bundle ships as a Copilot CLI plugin from `copilot-plugin/`:
+The same bundle ships as a Copilot CLI plugin nested under `plugin/.copilot-plugin/`, reusing the shared `plugin/skills/`, `plugin/agents/`, and `plugin/hooks/` content:
 
 ```
 copilot plugin marketplace add pskoett/pskoett-skills
 copilot plugin install pskoett-ai-skills
 ```
 
-Copilot reads the marketplace from `.github/plugin/marketplace.json` and the plugin manifest from `copilot-plugin/plugin.json`.
+Copilot reads the marketplace from `.github/plugin/marketplace.json` and the plugin manifest from `plugin/.copilot-plugin/plugin.json`.
 
 ### Individual skills via the Agent Skills CLI
 
