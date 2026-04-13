@@ -32,6 +32,17 @@ Install as a Claude Code plugin from this repo's marketplace. Run each command f
 
 This installs the full bundle: skills, audit agents, and hooks.
 
+### GitHub Copilot CLI
+
+The same bundle ships as a Copilot CLI plugin from `copilot-plugin/`:
+
+```
+copilot plugin marketplace add pskoett/pskoett-skills
+copilot plugin install pskoett-ai-skills
+```
+
+Copilot reads the marketplace from `.github/plugin/marketplace.json` and the plugin manifest from `copilot-plugin/plugin.json`.
+
 ### Individual skills via the Agent Skills CLI
 
 If you only want specific skills and not the full plugin bundle:

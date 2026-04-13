@@ -1,0 +1,1 @@
+../../plugin/agents/harden-auditor.md
