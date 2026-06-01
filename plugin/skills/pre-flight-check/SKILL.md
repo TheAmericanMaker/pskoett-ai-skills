@@ -1,12 +1,12 @@
 ---
 name: pre-flight-check
-description: "[Beta] Session-start scan that surfaces relevant learnings, recent errors, and eval status before work begins. Bridges the outer loop back into the inner loop by making accumulated knowledge visible at task start. Activated via SessionStart hook or manually before major tasks."
+description: '[Beta] Session-start scan that surfaces relevant learnings, recent errors, and eval status before work begins. Bridges the outer loop back into the inner loop by making accumulated knowledge visible at task start. Activated via SessionStart hook or manually before major tasks.'
 hooks:
   SessionStart:
-    - matcher: ""
-      hooks:
-        - type: command
-          command: "./scripts/pre-flight.sh"
+  - matcher: ''
+    hooks:
+    - type: command
+      command: ./scripts/pre-flight.sh
 ---
 
 # Pre-Flight Check
@@ -47,10 +47,11 @@ When invoked explicitly, the pre-flight check does a deeper analysis:
 
 ### Step 1: Scan .learnings/
 
-Read `.learnings/LEARNINGS.md`, `.learnings/ERRORS.md`, `.learnings/FEATURE_REQUESTS.md`.
+Read `.learnings/LEARNINGS.md`, `.learnings/ERRORS.md`, `.learnings/FEATURE_REQUESTS.md`, and `.learnings/HEALS.md` (the last from `self-healing` — verified runtime fixes filed during prior sessions; surface these prominently so the agent applies known fixes before reinventing them).
 
 For each entry, extract:
 - Pattern-Key, Summary, Priority, Status, Area, Related Files, Recurrence-Count, Last-Seen
+- For HEAL entries: also Active-Context, Trigger, and any Handoff block flagging promotion readiness
 
 ### Step 2: Scan .evals/ (if exists)
 
@@ -66,7 +67,7 @@ If the user described the task area, filter learnings to:
 - Entries whose `Area` matches the task
 - Entries whose `Related Files` overlap with likely-touched files
 - Entries with `Priority: high/critical` regardless of area
-- Entries with `Status: promotion_ready` (need attention)
+- Entries with `Recurrence-Count` >= 3 (promotion-ready by recurrence threshold — need attention)
 
 ### Step 5: Output
 
@@ -78,7 +79,7 @@ If the user described the task area, filter learnings to:
 ### Relevant Learnings
 | ID | Summary | Recurrence | Priority | Status |
 |----|---------|-----------|----------|--------|
-| LRN-... | ... | 3 | high | promotion_ready |
+| LRN-... | ... | 3 | high | pending |
 | ERR-... | ... | 2 | medium | pending |
 
 ### Key Warnings
@@ -121,21 +122,6 @@ Outer loop improves harness → pre-flight surfaces improvements → inner loop 
 ```
 
 Every learning captured, every rule promoted, every eval created becomes visible at the next session start. The knowledge gaps get smaller with every cycle.
-
-## Intentional Scope: What This Does NOT Duplicate
-
-Claude Code already auto-loads `CLAUDE.md` (all tiers, concatenated up the directory tree) and the first ~25KB of `~/.claude/projects/<project>/memory/MEMORY.md` at every session start. **This skill does not re-surface them** — that would waste tokens on content the agent already has in context.
-
-Pre-flight-check focuses exclusively on things that are **not** auto-loaded:
-
-| Surfaced | Not surfaced (already loaded by Claude Code) |
-|----------|---------------------------------------------|
-| `.learnings/*.md` — structured learning entries | `CLAUDE.md` at any tier |
-| `.evals/EVAL_INDEX.md` — failed / stale evals | `MEMORY.md` (first 25KB auto-loaded) |
-| `.context-surfing/handoff-*.md` — unread handoffs | `.claude/rules/*.md` |
-| Promotion-ready count (needs learning-aggregator run) | Subdirectory `CLAUDE.md` that the agent has already touched |
-
-If you want the agent to see content from `CLAUDE.md` or `MEMORY.md`, you don't need this skill — Claude Code handles it. If you want it to see content from `.learnings/` or `.evals/`, that's what this skill is for.
 
 ## Incremental Scanning (future enhancement)
 

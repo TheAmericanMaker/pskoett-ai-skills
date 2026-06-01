@@ -1,9 +1,25 @@
 ---
 name: intent-framed-agent
-description: "Frames coding-agent work sessions with explicit intent capture and drift monitoring. Use when a session transitions from planning/Q&A to implementation for coding tasks, refactors, feature builds, bug fixes, or other multi-step execution where scope drift is a risk."
+description: Frames coding-agent work sessions with explicit intent capture and drift monitoring. Use when a session transitions from planning/Q&A to implementation for coding tasks, refactors, feature builds, bug fixes, or other multi-step execution where scope drift is a risk.
 ---
 
 # Intent Framed Agent
+
+## Install
+
+```bash
+gh skill install pskoett/pskoett-skills
+```
+
+```bash
+gh skill install pskoett/pskoett-skills intent-framed-agent
+```
+
+Fallback using the Agent Skills CLI:
+
+```bash
+npx skills add pskoett/pskoett-skills/skills/intent-framed-agent
+```
 
 ## Purpose
 
@@ -138,9 +154,12 @@ Each Intent Frame and Intent Check you emit is captured verbatim in Entire's
 session transcript. At cadence, `learning-aggregator --deep` reads those
 transcripts and extracts:
 
-- Frames resolved as `Abandoned` or `Pivoted` → potential planning gaps
-- Drift signals that repeatedly fire in similar contexts → scope definition issues
-- Constraint violations detected by drift checks → patterns for promotion to CLAUDE.md
+- Frames that were resolved as `Abandoned` or `Pivoted` → potential planning
+  gaps
+- Drift signals that repeatedly fire in similar contexts → potential scope
+  definition issues
+- Constraint violations detected by drift checks → patterns for promotion to
+  project instruction files
 
 You do not need to do anything special for this — the intent blocks are
 structured (`## Intent Frame #N`, `## Intent Check`, `## Intent Resolution`),
@@ -183,6 +202,15 @@ monitoring.
 context-surfing drift exit at the same time), the drift exit takes precedence.
 Degraded context makes scope checks unreliable — resolve the context issue
 first, then resume scope monitoring in the next session.
+
+**Cadence separation:** Intent Checks fire at scope boundaries — before
+touching a new area/file, before starting a new logical work unit, when the
+current action feels tangential. Context-surfing's pre-commit anchor check
+fires at side-effecting-action moments — specific tool calls, writes,
+commits, commit-level output. Don't run both in the same beat: if an Intent
+Check has just fired and resolved cleanly, the next side-effecting action
+inside the same work unit doesn't need a fresh anchor check — you already
+re-grounded.
 
 ### What this skill produces
 

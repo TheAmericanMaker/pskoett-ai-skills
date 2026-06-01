@@ -1,9 +1,21 @@
 ---
 name: agent-teams-simplify-and-harden
-description: "Implementation + audit loop using parallel agent teams with structured simplify, harden, and document passes. Spawns implementation agents to do the work, then audit agents to find complexity, security gaps, and spec deviations, then loops until code compiles cleanly, all tests pass, and auditors find zero issues or the loop cap is reached. Use when: implementing features from a spec or plan, hardening existing code, fixing a batch of issues, or any multi-file task that benefits from a build-verify-fix cycle."
+description: 'Implementation + audit loop using parallel agent teams with structured simplify, harden, and document passes. Spawns implementation agents to do the work, then audit agents to find complexity, security gaps, and spec deviations, then loops until code compiles cleanly, all tests pass, and auditors find zero issues or the loop cap is reached. Use when: implementing features from a spec or plan, hardening existing code, fixing a batch of issues, or any multi-file task that benefits from a build-verify-fix cycle.'
 ---
 
 # Agent Teams Simplify & Harden
+
+## Install
+
+```bash
+gh skill install pskoett/pskoett-skills agent-teams-simplify-and-harden
+```
+
+Fallback using the Agent Skills CLI:
+
+```bash
+npx skills add pskoett/pskoett-skills/skills/agent-teams-simplify-and-harden
+```
 
 A two-phase team loop that produces production-quality code: **implement**, then **audit using simplify + harden passes**, then **fix audit findings**, then **re-audit**, repeating until the codebase is solid or the loop cap is reached.
 
@@ -159,6 +171,8 @@ Monitor agent messages. When all implementation agents report done:
 2. Run tests to verify all pass
 3. If either fails, fix or assign fixes before proceeding
 
+> Optional: delegate this compile/test step to the `verify-gate` skill instead of running ad-hoc commands, for consistency with the inner-loop pipeline. verify-gate runs the project's compile/test/lint and returns a pass/fail signal with diagnostics.
+
 Before spawning auditors, collect the list of files modified in this session:
 ```bash
 git diff --name-only <base-branch>  # or: git diff --name-only HEAD~N
@@ -177,47 +191,19 @@ Spawn `Explore` agents (read-only -- they cannot edit files, which prevents them
 | **harden-auditor** | Security and resilience gaps | "If someone malicious saw this, what would they try?" |
 | **spec-auditor** | Implementation vs spec/plan completeness | "Does the code match what was asked for?" |
 
-When installed as a plugin, the auditor agents are available as named subagents. Spawn them by name:
-
-```
-Agent tool:
-  subagent_type: pskoett-skills:simplify-auditor
-  team_name: "<project>-harden"
-  name: "simplify-auditor"
-  prompt: |
-    Review these files modified in this session:
-    <file list from git diff --name-only>
-
-Agent tool:
-  subagent_type: pskoett-skills:harden-auditor
-  team_name: "<project>-harden"
-  name: "harden-auditor"
-  prompt: |
-    Review these files modified in this session:
-    <file list from git diff --name-only>
-
-Agent tool:
-  subagent_type: pskoett-skills:spec-auditor
-  team_name: "<project>-harden"
-  name: "spec-auditor"
-  prompt: |
-    Review these files against the plan at docs/plans/<plan-file>.md:
-    <file list from git diff --name-only>
-```
-
-Full prompt templates are also available in `references/auditor-prompts.md` for use without the plugin agents (inline prompts with Explore subagent_type).
+Full prompt templates for each auditor are in `references/auditor-prompts.md`. Each prompt enforces: read-only scope, fresh-eyes start, structured finding format, and explicit zero-findings reporting.
 
 #### Simplify Auditor
 
-Checks: dead code, naming, control flow, API surface, over-abstraction, consolidation. Categorizes findings as **cosmetic** or **refactor** (refactor bar: "clearly wrong, not just imperfect"). Reports file, line, category, fix, severity.
+Spawned as `Explore` agent. Checks: dead code, naming, control flow, API surface, over-abstraction, consolidation. Categorizes findings as **cosmetic** or **refactor** (refactor bar: "clearly wrong, not just imperfect"). Reports file, line, category, fix, severity.
 
 #### Harden Auditor
 
-Checks: input validation, error handling, injection vectors, auth/authz, secrets, data exposure, dependency risk, race conditions. Categorizes findings as **patch** or **security refactor**. Reports file, line, category, severity, attack vector, fix.
+Spawned as `Explore` agent. Checks: input validation, error handling, injection vectors, auth/authz, secrets, data exposure, dependency risk, race conditions. Categorizes findings as **patch** or **security refactor**. Reports file, line, category, severity, attack vector, fix.
 
 #### Spec Auditor
 
-Checks: missing features, incorrect behavior, incomplete implementation, contract violations, test coverage, acceptance criteria gaps. Categorizes findings as **missing**, **incorrect**, **incomplete**, or **untested**. Reports file, line, category, spec reference, severity.
+Spawned as `Explore` agent. Checks: missing features, incorrect behavior, incomplete implementation, contract violations, test coverage, acceptance criteria gaps. Categorizes findings as **missing**, **incorrect**, **incomplete**, or **untested**. Reports file, line, category, spec reference, severity.
 
 ### 6. Process Audit Findings
 

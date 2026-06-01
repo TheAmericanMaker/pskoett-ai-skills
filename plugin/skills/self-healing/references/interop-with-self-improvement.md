@@ -38,7 +38,7 @@ self-improvement is the **outer loop**: pattern aggregation, promotion to durabl
 
 ## Handoff payload (heal → self-improvement)
 
-When a heal hits `Recurrence-Count >= 3` across at least 2 distinct tasks within a 30-day window, append a Handoff block:
+When a heal hits `Recurrence-Count >= 3` across at least 2 distinct tasks and the fix is generalizable, append a Handoff block:
 
 ```markdown
 ### Handoff

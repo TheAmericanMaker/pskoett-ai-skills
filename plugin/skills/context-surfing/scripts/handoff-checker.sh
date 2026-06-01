@@ -1,6 +1,6 @@
 #!/bin/bash
 # Context Surfing Handoff Checker Hook
-# Triggers on UserPromptSubmit to check for unread handoff files
+# Triggers on SessionStart to check for unread handoff files
 # If found, reminds the agent to load the handoff before starting new work
 
 set -e

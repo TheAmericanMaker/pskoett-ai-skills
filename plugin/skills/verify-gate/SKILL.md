@@ -1,8 +1,8 @@
 ---
 name: verify-gate
-description: "Runs project compile, test, and lint commands between implementation and quality review. Gates simplify-and-harden behind machine verification. If checks fail, routes back to implementation with diagnostics for a fix loop. If checks pass, signals ready for the quality pass. Use after any implementation work completes and before simplify-and-harden. Essential for the inner loop's verify step."
+description: Runs project compile, test, and lint commands between implementation and quality review. Gates simplify-and-harden behind machine verification. If checks fail, routes back to implementation with diagnostics for a fix loop. If checks pass, signals ready for the quality pass. Use after any implementation work completes and before simplify-and-harden. Essential for the inner loop's verify step.
 user-invocable: true
-argument-hint: "[--skip-lint] [--skip-types] [--fix-limit N]"
+argument-hint: '[--skip-lint] [--skip-types] [--fix-limit N]'
 ---
 
 # Verify Gate
@@ -22,14 +22,15 @@ This is the inner loop's **verify** step. Without it, the agent hands off code w
 
 ```
 [implementation] → verify-gate → simplify-and-harden → self-improvement
-                   ↻ fix loop
+                   ↻ fix loop — on failure, hands diagnostics to self-healing
+                   ↳ self-healing (diagnose → patch → verify → file HEAL); verify-gate re-checks
 ```
 
 ## Step 1: Discover Project Commands
 
 Read the project's configuration to find verification commands. Check these sources in order:
 
-1. **CLAUDE.md** — look for a `## Verification` or `## Test Commands` section
+1. **Project instruction files** (CLAUDE.md, AGENTS.md, .github/copilot-instructions.md) — look for a `## Verification` or `## Test Commands` section
 2. **package.json** — `scripts.test`, `scripts.lint`, `scripts.typecheck`, `scripts.build`. Also check for a `bun.lock` / `bun.lockb` alongside it → prefer `bun run <script>` over `npm run <script>` when present. Check for `pnpm-lock.yaml` → prefer `pnpm run`. Check for `yarn.lock` → prefer `yarn`.
 3. **Makefile** / **Justfile** — `test`, `lint`, `check`, `build` targets
 4. **Cargo.toml** — `cargo build`, `cargo test`, `cargo clippy`
@@ -37,7 +38,7 @@ Read the project's configuration to find verification commands. Check these sour
 6. **go.mod** — `go build ./...`, `go test ./...`, `go vet ./...`
 7. **deno.json** / **deno.jsonc** — `deno task <name>` for any defined tasks
 
-If no commands are discoverable, ask the user once and suggest they add a `## Verification` section to CLAUDE.md for future sessions:
+If no commands are discoverable, ask the user once and suggest they add a `## Verification` section to their project instruction files (CLAUDE.md, AGENTS.md, or equivalent) for future sessions:
 
 ```markdown
 ## Verification
@@ -137,11 +138,11 @@ verify-gate should run at every pipeline depth except Trivial:
 ### agent-teams-simplify-and-harden
 agent-teams already has compile + tests embedded in Step 4. verify-gate can replace that embedded logic for consistency — the team lead spawns verify-gate instead of running ad-hoc compile/test commands.
 
+### self-healing
+On any failure during the verify run, hand the diagnostics to `self-healing` (don't just retry the same command). Self-healing runs the diagnose → patch → verify loop, files a `HEAL-` entry to `.learnings/HEALS.md`, and returns control. Verify-gate then re-runs the checks. Up to 3 heal attempts per phase before abandoning.
+
 ### self-improvement
-If the fix loop resolves an error that was non-obvious, log it:
-- Pattern: what broke and why
-- Fix: what resolved it
-- Prevention: what convention or check would have caught it earlier
+If the heal loop surfaces a recurring pattern (Recurrence-Count >= 3 in `HEALS.md`), the heal's Handoff block flags it for promotion via self-improvement to `CLAUDE.md` / `AGENTS.md` / a new skill. For non-heal learnings (corrections, knowledge gaps, feature requests), log to `.learnings/LEARNINGS.md`, `ERRORS.md`, or `FEATURE_REQUESTS.md` per the self-improvement skill.
 
 ## What This Skill Does NOT Do
 
@@ -153,7 +154,7 @@ If the fix loop resolves an error that was non-obvious, log it:
 
 ## Configuration
 
-If the project has a `.verify-gate.yml` or a `verify-gate` section in CLAUDE.md:
+If the project has a `.verify-gate.yml` or a `verify-gate` section in its project instruction files (CLAUDE.md, AGENTS.md, or equivalent):
 
 ```yaml
 verify-gate:
@@ -168,9 +169,7 @@ verify-gate:
 
 If no configuration exists, discover commands automatically (Step 1) and suggest persisting them.
 
-### Custom Verification Tools (mcp-scripts) — Extension Point
-
-> These are examples of what's possible with gh-aw mcp-scripts, not features shipped with this plugin. Projects define their own scripts.
+### Custom Verification Tools (mcp-scripts)
 
 Projects with custom invariants can define inline verification tools using gh-aw's `mcp-scripts`. These run as additional phases after the standard compile/test/lint checks.
 

@@ -1,6 +1,6 @@
 ---
 name: eval-creator-ci
-description: "[Beta] CI-only eval regression runner using gh-aw (GitHub Agentic Workflows). Runs all eval cases in .evals/ on a schedule or per-PR, reports pass/fail results, and can block merges on regressions. Also creates new eval cases from promoted patterns flagged by learning-aggregator-ci. Use when: you want automated regression testing of promoted rules in CI/headless pipelines. For interactive eval creation and runs, use eval-creator."
+description: '[Beta] CI-only eval regression runner using gh-aw (GitHub Agentic Workflows). Runs all eval cases in .evals/ on a schedule or per-PR, reports pass/fail results, and can block merges on regressions. Also creates new eval cases from promoted patterns flagged by learning-aggregator-ci. Use when: you want automated regression testing of promoted rules in CI/headless pipelines. For interactive eval creation and runs, use eval-creator.'
 ---
 
 # Eval Creator CI

@@ -1,6 +1,6 @@
 ---
 name: self-healing-ci
-description: "CI-only self-healing workflow using gh-aw (GitHub Agentic Workflows) for active runtime recovery on pull requests and scheduled runs. When a CI check fails (test, build, lint, deploy, scan), this skill diagnoses the failure from CI logs, proposes a verified patch as a PR comment or follow-up commit, and commits a HEAL entry to `.learnings/HEALS.md`. Verify-before-persist discipline preserved: a HEAL is only `verified` if a re-run check passes in the same workflow; otherwise it ships as `pending-verify` for human follow-up. Recurrent heal patterns across PRs accumulate `Recurrence-Count` and append a `Handoff` block at ≥3 to flag promotion via self-improvement-ci. Use this skill when: you want headless heal-loop execution in CI/scheduled pipelines, you want recurring failure patterns captured automatically, or you want PRs that surface non-obvious environmental / tooling fixes without human triage. For interactive/local sessions, use `self-healing` instead."
+description: 'CI-only self-healing workflow using gh-aw (GitHub Agentic Workflows) for active runtime recovery on pull requests and scheduled runs. When a CI check fails (test, build, lint, deploy, scan), this skill diagnoses the failure from CI logs, proposes a verified patch as a PR comment or follow-up commit, and commits a HEAL entry to `.learnings/HEALS.md`. Verify-before-persist discipline preserved: a HEAL is only `verified` if a re-run check passes in the same workflow; otherwise it ships as `pending-verify` for human follow-up. Recurrent heal patterns across PRs accumulate `Recurrence-Count` and append a `Handoff` block at ≥3 to flag promotion via self-improvement-ci. Use this skill when: you want headless heal-loop execution in CI/scheduled pipelines, you want recurring failure patterns captured automatically, or you want PRs that surface non-obvious environmental / tooling fixes without human triage. For interactive/local sessions, use `self-healing` instead.'
 ---
 
 # Self-Healing CI
@@ -119,7 +119,7 @@ If the re-run isn't feasible (the check requires secrets only available in produ
 - Promotion threshold (same as interactive):
   - `Recurrence-Count >= 3`
   - Seen across at least 2 distinct PRs/tasks
-  - Within a 30-day window
+  - The fix is generalizable (not project-specific)
 - On promotion: append a `Handoff` block to the existing HEAL with a `Promotion Target` (CLAUDE.md / AGENTS.md / .github/copilot-instructions.md / new-skill) and a one-line `Distilled Rule`
 - `self-improvement-ci` consumes the Handoff blocks and proposes the promotion as a PR
 

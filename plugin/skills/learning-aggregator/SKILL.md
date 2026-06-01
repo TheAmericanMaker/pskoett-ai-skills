@@ -1,8 +1,8 @@
 ---
 name: learning-aggregator
-description: "[Beta] Cross-session analysis of accumulated .learnings/ files. Reads all entries, groups by pattern_key, computes recurrence across sessions, and outputs ranked promotion candidates. This is the outer loop's inspect step — it turns raw learning data into actionable gap reports. Use on a regular cadence (weekly, before major tasks, or at session start for critical projects). Can be invoked manually or scheduled."
+description: '[Beta] Cross-session analysis of accumulated .learnings/ files. Reads all entries, groups by pattern_key, computes recurrence across sessions, and outputs ranked promotion candidates. This is the outer loop''s inspect step — it turns raw learning data into actionable gap reports. Use on a regular cadence (weekly, before major tasks, or at session start for critical projects). Can be invoked manually or scheduled.'
 user-invocable: true
-argument-hint: "[--since YYYY-MM-DD] [--min-recurrence N] [--area AREA]"
+argument-hint: '[--since YYYY-MM-DD] [--min-recurrence N] [--area AREA]'
 ---
 
 # Learning Aggregator
@@ -16,7 +16,7 @@ Without this skill, `.learnings/` is a write-only log. Patterns accumulate but n
 - **Weekly cadence** — scheduled or manual, review accumulated learnings
 - **Before major tasks** — check if the task area has known patterns
 - **After a burst of sessions** — consolidate findings from a sprint or incident
-- **When self-improvement flags `promotion_ready`** — verify the flag with full context
+- **When an entry's `Recurrence-Count` reaches the promotion threshold (>= 3)** — verify the candidate with full context
 
 ## What It Produces
 
@@ -31,13 +31,14 @@ Read these files in `.learnings/`:
 | `LEARNINGS.md` | Corrections, knowledge gaps, best practices, recurring patterns |
 | `ERRORS.md` | Command failures, API errors, exceptions |
 | `FEATURE_REQUESTS.md` | Missing capabilities |
+| `HEALS.md` | Verified runtime recoveries filed by `self-healing` — including `Handoff` blocks flagging recurring patterns ready for promotion |
 
 Parse each entry's metadata:
 - `Pattern-Key` — the stable deduplication key
 - `Recurrence-Count` — how many times this pattern has been seen
 - `First-Seen` / `Last-Seen` — date range
 - `Priority` — low / medium / high / critical
-- `Status` — pending / promotion_ready / promoted / dismissed
+- `Status` — pending / in_progress / resolved / wont_fix / promoted / promoted_to_skill (the writer's vocabulary; promotion readiness is computed from `Recurrence-Count`, not stored as a status)
 - `Area` — frontend / backend / infra / tests / docs / config
 - `Related Files` — which parts of the codebase are affected
 - `Source` — conversation / error / user_feedback / simplify-and-harden
@@ -79,7 +80,7 @@ For each promotion candidate, classify the gap type:
 
 | Gap Type | Signal | Fix Target |
 |----------|--------|------------|
-| **Knowledge gap** | Agent didn't know X | Update CLAUDE.md or skill instructions |
+| **Knowledge gap** | Agent didn't know X | Update project instruction files (CLAUDE.md, AGENTS.md, .github/copilot-instructions.md) |
 | **Tool gap** | Agent improvised around missing capability | Add or update MCP tool / script |
 | **Skill gap** | Same behavior pattern keeps failing | Create or update a skill (use `/skill-creator`, validate with `quick_validate.py`, register `skill-check` eval) |
 | **Ambiguity** | Conflicting interpretations of spec/prompt | Tighten instructions or add examples |
@@ -113,7 +114,7 @@ Output a structured report:
   - [LRN-YYYYMMDD-001] Summary of first occurrence
   - [LRN-YYYYMMDD-002] Summary of second occurrence
   - [ERR-YYYYMMDD-001] Summary of related error
-- **Recommended action:** Add rule to CLAUDE.md: "[concise prevention rule]"
+- **Recommended action:** Add rule to project instruction files (CLAUDE.md, AGENTS.md, .github/copilot-instructions.md): "[concise prevention rule]"
 - **Eval candidate:** Yes — [description of what to test]
 
 #### 2. ...
@@ -139,7 +140,7 @@ Output a structured report:
 
 The gap report feeds into:
 
-1. **harness-updater agent** — takes promotion-ready patterns and applies them to CLAUDE.md / AGENTS.md
+1. **harness-updater agent** — takes promotion-ready patterns and applies them to project instruction files (CLAUDE.md, AGENTS.md, .github/copilot-instructions.md)
 2. **eval-creator skill** — takes eval candidates and creates permanent test cases
 3. **Human review** — for patterns classified as "reasoning failure" or "ambiguity" (these need human judgment)
 
@@ -152,73 +153,82 @@ The gap report feeds into:
 
 ## Session Trace Analysis
 
-Two-source outer loop: `.learnings/` (hot path, every session) + Entire session traces (cold path, cadenced).
+The outer loop reads from two complementary sources:
 
-| Source | What it captures | Cadence | Cost |
-|--------|-----------------|---------|------|
-| `.learnings/` | Claude's explicit self-reflections during sessions (what it noticed and logged) | Every session | Near-zero |
-| Entire traces | Full session transcripts — prompts, tool calls, retries, corrections, token usage | Weekly or on-demand | Expensive |
+| Source | What it is | Cadence | Cost |
+|--------|-----------|---------|------|
+| `.learnings/` | Explicit entries written by self-improvement during sessions. Agent's own reflections: corrections, knowledge gaps, recurring patterns it noticed. | Every session (hot path) | Near-zero |
+| Session traces | Full session transcripts captured by [Entire](https://entire.io): prompts, tool calls, outputs, files modified, token usage, checkpoints. | Weekly or on-demand (cold path) | Expensive — only run at cadence |
 
-The default mode reads `.learnings/` only. The `--deep` mode adds trace analysis and merges findings.
+The default mode reads `.learnings/` and produces a gap report from what the agent explicitly logged. The `--deep` mode also analyzes session traces and merges findings from both sources.
 
 ### Why both sources matter
 
-`.learnings/` captures what Claude **chose to log** — a curated subset. Entire captures **everything that happened**. Patterns visible in traces but missed in `.learnings/`:
+`.learnings/` captures what the agent **noticed and chose to log** — a curated subset. Session traces capture **everything that happened**, including patterns the agent worked around, retried, or never recognized as failures.
 
-- **Retry loops** — same tool call repeated 3+ times with small variations
-- **Silent user corrections** — user said "no, that's wrong" mid-flow, Claude corrected without logging
-- **Worked-around failures** — test failed, Claude changed approach, original failure forgotten
-- **Context handoff triggers** — which drift signals actually fired, not just that handoffs happened
-- **Token/time anomalies** — disproportionate cost vs output
+Examples of patterns visible in traces but absent from `.learnings/`:
 
-These are high-value because Claude can't self-report them — it doesn't know they're failures.
+- **Retry loops**: The same tool call repeated 3+ times with small variations. The agent eventually got it right but never logged the initial failures.
+- **Silent user corrections**: The user said "no, that's wrong" mid-flow. The agent corrected course but didn't log the misunderstanding.
+- **Worked-around test failures**: A test failed, the agent changed approach, the new approach passed, the original failure was forgotten.
+- **Context handoff causes**: Which drift signals actually triggered handoffs, not just that handoffs happened.
+- **Token/time anomalies**: Sessions with disproportionate cost vs output — a signal of inefficiency the agent is unaware of.
 
-### When to trigger --deep
+These patterns are high-value for the outer loop because the agent can't self-report them. Session traces are the only source.
 
-Trace analysis is cadenced, never per-session:
+### When to trigger --deep mode
 
-- **Weekly** (recommended minimum)
-- **Post-incident** — investigate what actually happened
-- **Pre-promotion** — verify a pattern really recurs in real sessions
-- **Manual** — `/learning-aggregator --deep --since 7d`
+Trace analysis is **not** per-session. It's cadenced:
 
-Per-session reads would burn tokens without new signal. Cross-session patterns only emerge over multiple sessions.
+- **Weekly scheduled** (recommended minimum): after a sprint or burst of sessions
+- **Post-incident**: when something went wrong and you want to understand why
+- **Pre-promotion**: before committing a pattern to project instruction files, verify it actually recurs in real sessions
+- **Manual invocation**: `/learning-aggregator --deep --since 7d`
+
+Running trace analysis per-session would burn tokens without producing new signal — cross-session patterns only emerge over multiple sessions.
 
 ### Reading traces with Entire
 
+When `--deep` is requested, the skill uses the `entire` CLI to query shadow branch data:
+
 ```bash
-# Availability check
+# Check availability
 entire --version
 
-# List checkpoints as JSON
+# List recent checkpoints as JSON (id, date, session_id, message, tool_use_id)
 entire rewind --list
 
-# Read a checkpoint's transcript
+# Read a checkpoint's full transcript
 entire explain --checkpoint <id> --full --no-pager
 
-# Raw JSONL
+# Or raw JSONL
 entire explain --checkpoint <id> --raw-transcript --no-pager
 
-# Filter by session
+# Filter to one session
 entire explain --session <session-id-prefix>
+
+# Generate AI summary (expensive, use sparingly)
+entire explain --checkpoint <id> --generate
 ```
 
-If `entire` is missing or the repo doesn't have Entire enabled, `--deep` falls back to `.learnings/`-only mode and reports the limitation.
+If `entire` is not installed or the current repo doesn't have Entire enabled, `--deep` falls back to `.learnings/`-only mode and reports the limitation in the gap report.
 
-### Trace extraction targets
+### What to extract from a trace
 
-For each checkpoint in the window:
+For each checkpoint within the time window, parse the raw transcript and look for:
 
-1. **Tool call repetition** → `retry-loop.<tool>`
-2. **User correction markers** ("no", "wrong", "actually", "instead" after agent action) → `correction.<area>`
-3. **Error patterns in tool output** (same regex set as error-detector.sh) → `error.<category>`
-4. **Drift signals from context-surfing exits** → `drift.<signal>`
-5. **Approach changes mid-task** → `approach-switch.<domain>`
-6. **Token anomalies** (>2x median for task type) → `cost.<task-type>`
+1. **Tool call repetition** — same tool + similar args > 3 times → likely a retry loop. Pattern-key: `retry-loop.<tool>`
+2. **User correction markers** — user messages containing "no", "wrong", "actually", "instead" immediately after an agent action → Pattern-key: `correction.<area>`
+3. **Error patterns in tool output** — matches against the same regex set as `error-detector.sh` (error, failed, Traceback, etc.) → Pattern-key: `error.<category>`
+4. **Handoff triggers** — context-surfing exit events and which drift signals fired → Pattern-key: `drift.<signal>`
+5. **Approach changes** — agent switching strategy mid-task without explicit pivot → Pattern-key: `approach-switch.<domain>`
+6. **Token anomalies** — sessions with token count > 2x the median for similar task types → Pattern-key: `cost.<task-type>`
 
-Findings are normalized to the self-improvement taxonomy (`harden.input_validation`, `simplify.dead_code`, etc.) where possible.
+Each finding is normalized to the same taxonomy as self-improvement (`harden.input_validation`, `simplify.dead_code`, etc.) where possible.
 
-### Merged gap report format
+### How the two sources merge in the gap report
+
+When `--deep` runs, each pattern in the gap report gets a `sources` field:
 
 ```yaml
 promotion_ready:
@@ -227,33 +237,35 @@ promotion_ready:
     sources:
       - .learnings/LEARNINGS.md (3 entries)
       - entire:traces (5 occurrences across 4 sessions)
-    confidence: high  # in both sources
+    confidence: high  # appears in both sources
     evidence:
       - "LRN-20260401-001: Missing bounds check on pagination"
-      - "entire:1ca16f9b: Retry loop on /api/search — pageSize rejected 4x"
+      - "entire:1ca16f9b: Retry loop on /api/search — pageSize rejected 4 times"
       - "entire:8bf2e4cd: User correction 'validate before DB query'"
     entire_checkpoints:
       - 1ca16f9bb3801ee2a02f2384f31355a54b81ea00
       - 8bf2e4cd63d01040b38df07c43f73e0f15d05ac9
 ```
 
-Patterns in both sources are highest confidence. Patterns only in `.learnings/` may be over-logged. Patterns only in traces may be noise. The overlap is where the signal is strongest.
+A pattern in both sources is higher confidence than one from either alone. A pattern only in `.learnings/` might be over-logged by a diligent agent. A pattern only in traces might be noise. The overlap is where the signal is strongest.
 
-### Compatibility
+### Trace source compatibility
 
-Default target: Entire v0.5.4+ via `entire rewind --list` and `entire explain`. The concept is source-agnostic — any tool exposing checkpoint lists and transcript reads can serve as a trace source. Custom adapters can live in `scripts/` or via gh-aw `mcp-scripts`.
+The default implementation targets Entire (v0.5.4+) via the `entire rewind --list` and `entire explain` commands. The concept is source-agnostic — any session capture tool that exposes:
+
+- A list of recent checkpoints (with id, timestamp, session id)
+- The ability to read a checkpoint's transcript
+- Timestamps for cadence filtering
+
+...can serve as a trace source. Adapters for other capture tools can be added in `scripts/` or via gh-aw `mcp-scripts`.
 
 ## Persistence
 
-Reads `.learnings/` from the working directory. The interactive skill does not integrate with external memory backends — `.learnings/` is the source of truth.
-
-**The promotion path is already wired up**: when harness-updater acts on this skill's gap report, it writes rules to `CLAUDE.md` (or `AGENTS.md` / `.claude/rules/`). Claude Code **auto-loads those files at every session start**, so a promoted rule becomes part of the agent's context on the next session without any additional surfacing. No hook or pre-load needed — the target files are already in the auto-load set.
-
-For CI-side durable storage across workflow runs, see `learning-aggregator-ci`, which can optionally back its state with gh-aw's `repo-memory`. The resulting `learnings/default` branch is a normal git branch and can be fetched locally if desired, but this skill itself only reads local files.
+Reads `.learnings/` from the working directory. This is the only persistence mode — the skill does not integrate with external memory backends in interactive sessions. For CI-side durable storage across workflow runs, see `learning-aggregator-ci`, which can optionally back its state with gh-aw's `repo-memory` (git-branch persistence). The resulting branch is a normal git branch and can be fetched locally if desired, but the interactive skill itself only reads local files.
 
 ### Tracker-id in gap reports
 
-Each promotion candidate in the gap report includes a `tracker` field set to the pattern-key. This tracker propagates through the full chain: harness-updater embeds it as a comment in CLAUDE.md, eval-creator references it in eval cases. To audit the full lifecycle of a pattern, search for `tracker:[pattern-key]` across the repo and GitHub.
+Each promotion candidate in the gap report includes a `tracker` field set to the pattern-key. This tracker propagates through the full chain: harness-updater embeds it as a comment in project instruction files, eval-creator references it in eval cases. To audit the full lifecycle of a pattern, search for `tracker:[pattern-key]` across the repo and GitHub.
 
 ## What This Skill Does NOT Do
 

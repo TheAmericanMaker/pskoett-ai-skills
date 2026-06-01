@@ -1,8 +1,8 @@
 ---
 name: eval-creator
-description: "[Beta] Creates permanent eval cases from promoted learnings and runs regression checks against them. Turns failures into test cases that prevent silent regression. This is the outer loop's regress-test step. Use when a learning is promoted and has a clear pass/fail condition, or on cadence to verify promoted rules still hold."
+description: '[Beta] Creates permanent eval cases from promoted learnings and runs regression checks against them. Turns failures into test cases that prevent silent regression. This is the outer loop''s regress-test step. Use when a learning is promoted and has a clear pass/fail condition, or on cadence to verify promoted rules still hold.'
 user-invocable: true
-argument-hint: "[create | run | list] [--pattern-key KEY]"
+argument-hint: '[create | run | list] [--pattern-key KEY]'
 ---
 
 # Eval Creator
@@ -35,7 +35,7 @@ The blog says: "If a failure taught you something important, it should become a 
 
 From harness-updater or manually:
 - Pattern-Key of the promoted learning
-- The rule that was added to CLAUDE.md / AGENTS.md
+- The rule that was added to the project instruction files (CLAUDE.md, AGENTS.md, .github/copilot-instructions.md)
 - What to test (the assertion)
 - Verification method
 
@@ -46,8 +46,8 @@ From harness-updater or manually:
 id: eval-YYYYMMDD-NNN
 pattern-key: [from learning]
 source: [LRN-YYYYMMDD-001, ERR-YYYYMMDD-003]
-promoted-rule: "[the rule text in CLAUDE.md]"
-promoted-to: CLAUDE.md
+promoted-rule: "[the rule text in project instruction files]"
+promoted-to: CLAUDE.md  # or AGENTS.md, .github/copilot-instructions.md, or equivalent
 created: YYYY-MM-DD
 last-run: YYYY-MM-DD
 last-result: pass | fail | skip
@@ -86,7 +86,7 @@ expect_exit: 0
 ### file-check
 Verify a file or section exists:
 ```
-target: CLAUDE.md
+target: CLAUDE.md  # or AGENTS.md, .github/copilot-instructions.md
 section: "## Verification"
 expect: exists
 ```
@@ -94,7 +94,7 @@ expect: exists
 ### rule-check
 Verify a rule exists in an instruction file:
 ```
-target: CLAUDE.md
+target: CLAUDE.md  # or AGENTS.md, .github/copilot-instructions.md
 contains: "[the promoted rule text or key phrase]"
 expect: found
 ```
@@ -190,9 +190,7 @@ For projects with a CI pipeline, eval-creator can run as a scheduled check:
 - Per-PR: run evals related to changed files
 - Post-promotion: run the newly created eval immediately
 
-## Custom Verification Methods (mcp-scripts) — Extension Point
-
-> These are examples of what's possible with gh-aw mcp-scripts, not features shipped with this plugin. Projects define their own scripts.
+## Custom Verification Methods (mcp-scripts)
 
 Beyond the four built-in methods (grep-check, command-check, file-check, rule-check), projects can define custom verification tools as mcp-scripts for complex assertions that the built-ins can't express.
 
@@ -217,7 +215,7 @@ Reference the script in an eval case as `verification_method: script-check` with
 
 ## Persistence
 
-Eval cases live in `.evals/` in the working directory. This interactive skill does not integrate with external memory backends. For CI-side durable storage that survives across workflow runs, see `eval-creator-ci`, which can optionally back its run history and created-pattern ledger with gh-aw's `repo-memory`.
+Eval cases live in `.evals/` in the working directory. The skill does not integrate with external memory backends in interactive sessions. For CI-side durable storage, see `eval-creator-ci`, which can optionally back its run history with gh-aw's `repo-memory`.
 
 ## Skill Validation (skill-check)
 
@@ -260,7 +258,7 @@ This requires Claude CLI access and is expensive. Use it for high-value skills o
 
 Two scenarios connect the outer loop to skill validation:
 
-1. **Harness-updater modifies a skill**: When a promoted rule is inserted into a SKILL.md (rather than CLAUDE.md), create a `skill-check` eval to verify the skill remains structurally valid after the edit.
+1. **Harness-updater modifies a skill**: When a promoted rule is inserted into a SKILL.md (rather than a project instruction file), create a `skill-check` eval to verify the skill remains structurally valid after the edit.
 
 2. **Self-improvement identifies a skill gap**: When learning-aggregator classifies a pattern as `skill_gap` and recommends "create a new skill", the new skill should pass `quick_validate.py` before being committed. Create a `skill-check` eval for it that persists as a regression test.
 

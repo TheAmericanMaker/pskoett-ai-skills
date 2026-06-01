@@ -1,37 +1,62 @@
 ---
 name: self-improvement
-description: "Captures learnings, errors, and corrections to enable continuous improvement. Use when: (1) A command or operation fails unexpectedly, (2) User corrects Claude ('No, that's wrong...', 'Actually...'), (3) User requests a capability that doesn't exist, (4) An external API or tool fails, (5) Claude realizes its knowledge is outdated or incorrect, (6) A better approach is discovered for a recurring task. Also review learnings before major tasks. For CI-only/headless learning capture, use self-improvement-ci."
+description: 'Captures learnings, errors, corrections, and feature requests to enable continuous improvement. Use when: (1) User corrects Claude (''No, that''s wrong...'', ''Actually...''), (2) User requests a capability that doesn''t exist, (3) Claude realizes its knowledge is outdated or incorrect, (4) A better approach is discovered for a recurring task, (5) Receiving a Handoff block from self-healing (a recurring verified heal at Recurrence-Count >= 3) to distill into a memory file or new skill. For ACTIVE runtime failures where the agent needs to apply and verify a fix mid-task, use `self-healing` instead (it files HEAL- entries with proof; self-improvement promotes accumulated patterns). Also review learnings before major tasks. For CI-only/headless learning capture, use self-improvement-ci.'
 hooks:
   UserPromptSubmit:
-    - matcher: ""
-      hooks:
-        - type: command
-          command: "./scripts/activator.sh"
+  - matcher: ''
+    hooks:
+    - type: command
+      command: ./scripts/activator.sh
   PostToolUse:
-    - matcher: "Bash"
-      hooks:
-        - type: command
-          command: "./scripts/error-detector.sh"
+  - matcher: Bash
+    hooks:
+    - type: command
+      command: ./scripts/error-detector.sh
 ---
 
 # Self-Improvement Skill
 
+## Install
+
+```bash
+gh skill install pskoett/pskoett-skills self-improvement
+```
+
+For CI-only execution, use:
+
+```bash
+gh skill install pskoett/pskoett-skills self-improvement-ci
+```
+
+Fallback using the Agent Skills CLI:
+
+```bash
+npx skills add pskoett/pskoett-skills/skills/self-improvement
+npx skills add pskoett/pskoett-skills/skills/self-improvement-ci
+```
+
 Log learnings and errors to markdown files for continuous improvement. Coding agents can later process these into fixes, and important learnings get promoted to project memory.
+
+**Pair with [`self-healing`](../self-healing/SKILL.md):** self-healing is the active runtime recovery primitive — it diagnoses, patches, verifies, and files `HEAL-` entries to `.learnings/HEALS.md` when something breaks mid-task. Self-improvement (this skill) is the passive accumulation and promotion layer — it logs corrections, knowledge gaps, and feature requests, and promotes recurring heal handoffs to permanent memory. They share `.learnings/` but write to different files; verify discipline lives in self-healing, promotion logic lives here.
 
 ## Quick Reference
 
 | Situation | Action |
 |-----------|--------|
-| Command/operation fails | Log to `.learnings/ERRORS.md` |
+| Active failure mid-task — agent needs to fix it now | **Use `self-healing` instead** (files verified HEAL- to `.learnings/HEALS.md`) |
+| Command/operation failed in the past (not actively healing) | Log to `.learnings/ERRORS.md` |
 | User corrects you | Log to `.learnings/LEARNINGS.md` with category `correction` |
 | User wants missing feature | Log to `.learnings/FEATURE_REQUESTS.md` |
 | API/external tool fails | Log to `.learnings/ERRORS.md` with integration details |
+| Self-healing Handoff block at Recurrence ≥ 3 | Promote the Distilled Rule to `CLAUDE.md` / `AGENTS.md` / new skill |
 | Knowledge was outdated | Log to `.learnings/LEARNINGS.md` with category `knowledge_gap` |
 | Found better approach | Log to `.learnings/LEARNINGS.md` with category `best_practice` |
 | Simplify/Harden recurring patterns | Log/update `.learnings/LEARNINGS.md` with `Source: simplify-and-harden` and a stable `Pattern-Key` |
 | Similar to existing entry | Link with `**See Also**`, consider priority bump |
 | Broadly applicable learning | Promote to `CLAUDE.md`, `AGENTS.md`, and/or `.github/copilot-instructions.md` |
-| Workflow improvements | Promote to `AGENTS.md` |
+| Workflow improvements | Promote to `AGENTS.md` (openclaw workspace) |
+| Tool gotchas | Promote to `TOOLS.md` (openclaw workspace) |
+| Behavioral patterns | Promote to `SOUL.md` (openclaw workspace) |
 
 ## Setup
 
@@ -192,6 +217,8 @@ When a learning is broadly applicable (not a one-off fix), promote it to permane
 | `CLAUDE.md` | Project facts, conventions, gotchas for all Claude interactions |
 | `AGENTS.md` | Agent-specific workflows, tool usage patterns, automation rules |
 | `.github/copilot-instructions.md` | Project context and conventions for GitHub Copilot |
+| `SOUL.md` | Behavioral guidelines, communication style, principles (openclaw) |
+| `TOOLS.md` | Tool capabilities, usage patterns, integration gotchas (openclaw) |
 
 ### How to Promote
 
@@ -268,6 +295,8 @@ Promotion targets:
 - `CLAUDE.md`
 - `AGENTS.md`
 - `.github/copilot-instructions.md`
+- `SOUL.md` / `TOOLS.md` for openclaw workspace-level guidance when applicable
+
 Write promoted rules as short prevention rules (what to do before/while coding),
 not long incident write-ups.
 
@@ -390,7 +419,7 @@ Create `.claude/settings.json` in your project:
       "matcher": "",
       "hooks": [{
         "type": "command",
-        "command": "${CLAUDE_SKILL_DIR}/scripts/activator.sh"
+        "command": "./skills/self-improvement/scripts/activator.sh"
       }]
     }]
   }
@@ -408,14 +437,14 @@ This injects a learning evaluation reminder after each prompt (~50-100 tokens ov
       "matcher": "",
       "hooks": [{
         "type": "command",
-        "command": "${CLAUDE_SKILL_DIR}/scripts/activator.sh"
+        "command": "./skills/self-improvement/scripts/activator.sh"
       }]
     }],
     "PostToolUse": [{
       "matcher": "Bash",
       "hooks": [{
         "type": "command",
-        "command": "${CLAUDE_SKILL_DIR}/scripts/error-detector.sh"
+        "command": "./skills/self-improvement/scripts/error-detector.sh"
       }]
     }]
   }
@@ -496,30 +525,63 @@ Before extraction, verify:
 - [ ] No project-specific hardcoded values
 - [ ] Follows skill naming conventions (lowercase, hyphens)
 
-## Persistence
-
-Learning entries are stored as files in `.learnings/` in the working directory. This is the primary store — structured, VCS-shareable, and the durable record of what this skill has captured.
-
-### Claude Code Memory Integration
-
-Claude Code has two native memory systems that are **already auto-loaded at session start**, which this skill takes advantage of:
-
-| System | Path | Auto-loaded | Used by this skill |
-|--------|------|-------------|-------------------|
-| **CLAUDE.md tiers** | `./CLAUDE.md`, `./CLAUDE.local.md`, `~/.claude/CLAUDE.md`, `./.claude/CLAUDE.md` | Full file, concatenated up the directory tree | **Promotion target** — when a learning crosses the threshold, this skill promotes it here |
-| **`.claude/rules/*.md`** | `./.claude/rules/`, `~/.claude/rules/` | Loaded at launch, path-scoped via YAML frontmatter | **Promotion target** for path-scoped rules |
-| **Auto memory** | `~/.claude/projects/<project>/memory/MEMORY.md` + topic files | `MEMORY.md` first 25KB auto-loaded | Managed by Claude Code itself — do not edit `MEMORY.md` directly |
-
-**The key insight**: because CLAUDE.md is auto-loaded by Claude Code at every session start, a rule promoted from `.learnings/` to `CLAUDE.md` becomes visible to Claude **next session without any skill needing to re-surface it**. This is why the promotion flow (`.learnings/` → `CLAUDE.md`) works — the target file is automatically in context.
-
-**When to write to auto memory instead**: if a learning is truly personal-machine (not VCS-shareable) and Claude-specific, write a **sibling topic file** under `~/.claude/projects/<project>/memory/<topic>.md`. Do NOT edit `MEMORY.md` directly — it's owned by Claude Code's auto-memory subsystem and concurrent writes will conflict. The `InstructionsLoaded` hook fires when memory files load if you need observability.
-
-### CI-side memory (for completeness)
-
-For CI workflows, the `self-improvement-ci` and `learning-aggregator-ci` variants can use gh-aw's `repo-memory` (git-branch persistence) or `cache-memory` (Actions cache). Those are CI-only features and not accessible from this interactive skill.
-
-**Note on Copilot Memory:** GitHub Copilot CLI has a built-in memory feature that improves its own responses within Copilot sessions. It currently has no public API, so external skills can't read or write to it. Not a blocker — Copilot CLI benefits from its own memory automatically.
-
 ## Multi-Agent Support
 
-This skill works across different AI coding agents. See [references/multi-agent-support.md](references/multi-agent-support.md) for agent-specific activation guides (Claude Code, Codex CLI, GitHub Copilot).
+This skill works across different AI coding agents with agent-specific activation.
+
+### Claude Code
+
+**Activation**: Hooks (UserPromptSubmit, PostToolUse)
+**Setup**: `.claude/settings.json` with hook configuration
+**Detection**: Automatic via hook scripts
+
+### Codex CLI
+
+**Activation**: Hooks (same pattern as Claude Code)
+**Setup**: `.codex/settings.json` with hook configuration
+**Detection**: Automatic via hook scripts
+
+### GitHub Copilot
+
+**Activation**: Manual (no hook support)
+**Setup**: Add to `.github/copilot-instructions.md`:
+
+```markdown
+## Self-Improvement
+
+After solving non-obvious issues, consider logging to `.learnings/`:
+1. Use format from self-improvement skill
+2. Link related entries with See Also
+3. Promote high-value learnings to skills
+
+Ask in chat: "Should I log this as a learning?"
+```
+
+**Detection**: Manual review at session end
+
+### OpenClaw (Optional)
+
+OpenClaw-specific setup, promotion targets, and hybrid usage details are kept in
+`references/openclaw-integration.md` so this main skill stays focused on the core
+self-improvement workflow for coding agents.
+
+### Agent-Agnostic Guidance
+
+Regardless of agent, apply self-improvement when you:
+
+1. **Discover something non-obvious** - solution wasn't immediate
+2. **Correct yourself** - initial approach was wrong
+3. **Learn project conventions** - discovered undocumented patterns
+4. **Hit unexpected errors** - especially if diagnosis was difficult
+5. **Find better approaches** - improved on your original solution
+
+### Copilot Chat Integration
+
+For Copilot users, add this to your prompts when relevant:
+
+> After completing this task, evaluate if any learnings should be logged to `.learnings/` using the self-improvement skill format.
+
+Or use quick prompts:
+- "Log this to learnings"
+- "Create a skill from this solution"
+- "Check .learnings/ for related issues"
