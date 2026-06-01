@@ -33,6 +33,12 @@ This is similar to dynamic workflows, but the orchestration is human-readable an
 instead of a runtime script. Use it when persistence, branches, PRs, human steering, or cross-session
 continuity matter more than fully automated fan-out.
 
+A code runtime gets reliability for free (validated results, barriers, budgets, dedup, resume). A
+prompt-driven control plane only gets it if you make state machine-checkable. Two contracts do that
+without a runtime: a required **worker result block** and a durable **control-state manifest** (see
+[Machine-checkable contracts](#machine-checkable-contracts)). Everything else in this skill keys off
+those two artifacts — without them, "is this worker done and passing?" is a guess, not a field read.
+
 ## Supported control apps
 
 This skill is app-agnostic. First discover which orchestration tools are available in the current
@@ -65,11 +71,105 @@ Do not use it for a simple one-file fix, a quick answer, or a task where a singl
 enough. Orchestration has overhead; spend it only when coordination reduces risk or increases
 throughput.
 
+## Machine-checkable contracts
+
+These are the session-native analog of a runtime's typed results and durable run state. They stay
+human-readable, but they are **required**, not advisory — the control session parses them instead of
+re-reading prose.
+
+### Worker result block
+
+Every worker MUST end its report with a fenced ` ```json ` block tagged `control-result`. The control
+session reads this block (never the surrounding prose) to update state, dedup, and decide routing.
+
+```json control-result
+{
+  "worker_id": "auth-api",
+  "wave_id": "w1",
+  "unit_key": "service/auth",
+  "scope": "src/auth/** — refresh-token rotation",
+  "status": "complete",
+  "files_changed": ["src/auth/rotate.ts"],
+  "verification": { "command": "pnpm test auth", "result": "pass", "evidence": "42 passed" },
+  "subagents_used": "2 — one research, one test author",
+  "risks": ["rotation interacts with logout; covered by test"],
+  "next_step": "ready for review session",
+  "report_ref": "thread/PR/path to the full report"
+}
+```
+
+The block must be **strict JSON** (no comments/trailing commas) so it parses. `status` is one of
+`complete | blocked | needs-decision | failed`; `verification.result` is one of `pass | fail | not-run`.
+
+### Control-state manifest
+
+One durable artifact that **is** the source of truth for the mission — a pinned control thread, a
+tracking-issue body, a canvas node, or a committed `control/state.json`. Re-read and update it every
+turn; keep the conversation for decisions, not state. One row per **unit** (unit-keyed, so the same
+unit is never dispatched twice — this is the dedup ledger).
+
+```json
+{
+  "mission": "MCP tool parity audit",
+  "non_goals": ["no behavior changes"],
+  "success_criteria": ["every tool present in server, HTTP, SDK, docs or flagged"],
+  "budget": { "max_concurrent_workers": 5, "max_total_workers": 25, "spawned": 0, "in_flight": 0 },
+  "convergence": { "rule": "single-pass", "k_empty": 2, "empty_streak": 0, "target": null, "current": 0 },
+  "workers": [
+    {
+      "unit_key": "surface/http",
+      "worker_id": "http-audit",
+      "session_ref": "thread-or-session id/link",
+      "scope": "HTTP API surface",
+      "branch_or_pr": "—",
+      "status": "pending",
+      "wave_id": "w1",
+      "last_update": "ISO-8601",
+      "evidence_ref": "report_ref from the result block"
+    }
+  ],
+  "decisions": [],
+  "open_followups": []
+}
+```
+
+Rules:
+
+- **Worker status** (what a worker self-reports in its result block): `complete | blocked |
+  needs-decision | failed`.
+- **Manifest unit status** (the superset the control session maintains): `pending | dispatched |
+  needs-decision | blocked | stalled | complete | failed | dropped`. Worker-reported values are a
+  subset of these, so setting a unit's status from a worker block (Step 5) is always valid.
+- **Terminal** states — a unit is closed — are `complete | failed | dropped`. Everything else is
+  non-terminal and must be resolved, or explicitly converted to `dropped` with a reason, before the
+  mission closes (Step 8).
+- `budget.in_flight` is the number of rows currently `dispatched`. Increment `spawned` and `in_flight`
+  on dispatch; decrement `in_flight` when a unit leaves `dispatched`; recompute it from the rows on
+  rehydrate.
+- `convergence.rule` is one of `single-pass | loop-until-dry | loop-until-budget |
+  accumulate-to-target`. `k_empty`/`empty_streak` are used only by `loop-until-dry`; `target`/`current`
+  only by `accumulate-to-target` (`target` = the count or coverage goal, `current` = progress so far).
+- dropped/failed units MUST carry a reason in `open_followups`.
+
+This manifest is what a fresh control session rehydrates from (Step 0).
+
 ## Control workflow
+
+### 0. Rehydrate (resume an in-flight mission)
+
+On session start, look for an existing control-state manifest for this mission. If one exists:
+
+- Load it; treat it as the source of truth.
+- Re-attach to workers by `session_ref` and reconcile each worker's *real* status (read the thread/PR)
+  before any new dispatch.
+- Recompute `budget.in_flight` from the rows still marked `dispatched`.
+- Do NOT re-dispatch a unit whose status is `dispatched` or `complete` — route a follow-up instead.
+
+If no manifest exists, this is a new mission — create one during Step 1.
 
 ### 1. Frame the mission
 
-Before spawning anything, capture:
+Before spawning anything, capture (and write into the manifest):
 
 - Objective and non-goals
 - Repositories, branches, PRs, or issues in scope
@@ -77,6 +177,14 @@ Before spawning anything, capture:
 - Success criteria and verification gates
 - Merge/integration expectations
 - Any "do not touch" constraints
+
+Also set explicit limits up front (manifest `budget` and `convergence`):
+
+- `max_concurrent_workers` (default ~4–6) — never more in flight at once
+- `max_total_workers` — a lifetime backstop for the whole mission (e.g. 25)
+- optional token / cost / time ceiling
+- the convergence rule: `single-pass` for bounded missions; `loop-until-dry`, `loop-until-budget`,
+  or `accumulate-to-target` for open-ended audits/migrations/parity sweeps
 
 If any boundary is ambiguous and could cause conflicting edits, ask before dispatch.
 
@@ -110,14 +218,24 @@ not need persistent branch state.
 
 ### 4. Dispatch workers with complete prompts
 
+Respect the budget: **never dispatch while `in_flight >= max_concurrent_workers`** — queue the unit
+(`status: pending`) and log it. On reaching `max_total_workers` or a token/cost ceiling, STOP
+dispatching and surface a *Decision needed* rather than spawning more. Dispatch is an **atomic
+manifest update**: set the unit's row to `status: dispatched` (with `session_ref`, `worker_id`,
+`wave_id`, `last_update`) and increment `spawned` and `in_flight` together; if the dispatch fails to
+start, leave the row `pending` and advance neither counter. Decrement `in_flight` when a unit leaves
+`dispatched` (it reaches a terminal state, or returns to `needs-decision`/`blocked`/`stalled`) so
+queued units can start. This keeps `in_flight` equal to the count of `dispatched` rows that Step 0
+recomputes.
+
 Each worker prompt should be self-contained. Include:
 
-- The mission and exact scope
+- The mission and exact scope (and its `unit_key`)
 - Files, subsystems, issue/PR links, and branch expectations
 - What the worker may and may not change
 - Verification commands or acceptance criteria
 - Whether it may create commits, PRs, or only report back
-- A concise reporting format
+- The required result block
 
 Worker prompt template:
 
@@ -125,20 +243,19 @@ Worker prompt template:
 You are worker <name> for <project>.
 
 Mission: <specific outcome>
+unit_key / wave_id: <key> / <wave>
 Scope: <files/subsystems/issue/PR>
 Do not touch: <boundaries>
 Approach: <expected plan or constraints>
 Verification: <commands/checks/evidence>
-Report back with:
-- Summary
-- Files changed
-- Verification run and result
-- Risks/blockers
-- Recommended next step
-```
 
-Tell workers they may use their own subagents for local research, implementation, and review, but the
-worker remains accountable for its scope and final report.
+You MAY use your own subagents for local research, implementation, and review, but you remain
+accountable for this scope and the final report. Do NOT create or steer further persistent project
+sessions — if the work needs another full workstream, say so in next_step.
+
+End your report with a fenced ```json control-result block (see the contract). Populate every field;
+record subagents you used in subagents_used. The control session reads only that block.
+```
 
 When using Codex app controls, prefer to rename and pin important worker/control threads so the
 session graph stays legible. When using GitHub Copilot app controls, use the corresponding session or
@@ -146,33 +263,65 @@ workspace labels if exposed.
 
 ### 5. Track state centrally
 
-Use whatever state tools are available in the control environment:
+The control-state manifest is the single source of truth — update it every turn, not the
+conversation. From each worker's result block, set the unit's `status`, `branch_or_pr`,
+`last_update`, and `evidence_ref`. Keep the control session's context focused on summaries and
+decisions, not full transcripts; the full report lives at `report_ref`.
 
-- Session names and IDs for routing
-- SQL/todo tables for workstream state
-- Branches, issues, and PRs for durable project state
-- Canvas nodes for visual topology and status when helpful
+Track at least, per unit: `unit_key`, `worker_id`, `session_ref`, scope, status, branch/PR, last
+update, blocker, and verification state. Canvas nodes or a SQL/todo table are good backends for the
+manifest when the app exposes them.
 
-Track at least: worker/session ID, scope, status, branch/PR, last update, blocker, and verification
-state. Keep the control session's context focused on summaries and decisions, not full transcripts.
+### 6. Route follow-ups (result-gate)
 
-### 6. Route follow-ups
+When a worker reports, first run the **result-gate**:
 
-When a worker reports:
+- Parse the `control-result` block. If a required field is missing or malformed, or the status is
+  inconsistent with evidence (e.g. `status: complete` with `verification.result != pass`), do NOT
+  accept it — send exactly one standardized re-prompt asking only for the corrected block. Cap at 2
+  retries, then escalate to the user.
+- Accept completed work only when the block validates AND meets the success criteria.
 
-- Accept completed work only if it includes evidence against the success criteria
-- Send targeted follow-ups for missing verification, scope drift, or blockers
-- Avoid duplicating a worker's investigation unless its result is incomplete or suspect
-- If two workers conflict, pause integration and resolve ownership before more edits happen
+Then route:
 
-### 7. Verify and consolidate
+- Send targeted follow-ups for missing verification, scope drift, or blockers.
+- Avoid duplicating a worker's investigation unless its result is incomplete or suspect (check the
+  unit ledger first).
+- If two or more workers conflict, pause integration and resolve ownership before more edits happen.
+
+### 7. Iterate waves to convergence
+
+For multi-wave missions, after routing a wave's follow-ups, apply the declared `convergence.rule`
+before consolidating:
+
+- **single-pass** — one wave; skip to consolidate.
+- **loop-until-dry** — keep opening units until `k_empty` consecutive waves produce zero *new*
+  (deduped) units; maintain `empty_streak` in the manifest.
+- **loop-until-budget** — stop when a budget cap is hit.
+- **accumulate-to-target** — stop when the target count/coverage is reached.
+
+"New" and "dry" are measured against the manifest's set of `unit_key`s, not memory. Never stop
+silently — write why iteration ended (`open_followups` / `decisions`).
+
+### 8. Verify and consolidate
 
 Before declaring the mission done:
 
-- Run or delegate the agreed verification gate
-- Review diffs or ask an independent reviewer session for high-signal findings
-- Ensure worker outputs are integrated in the right branch/session
-- Summarize what landed, what did not, and any remaining risk
+- Run or delegate the agreed verification gate.
+- Review diffs or ask an independent reviewer session for high-signal findings.
+- Ensure worker outputs are integrated in the right branch/session.
+
+**Wave-join / completeness gate:** the mission is complete only when **every** manifest worker row is
+in a **terminal** state — `complete`, `failed`, or `dropped`. Non-terminal rows (`pending`,
+`dispatched`, `needs-decision`, `blocked`, `stalled`) must first be resolved; a unit that cannot be —
+e.g. a worker that never reported by its checkpoint, marked `stalled` — must be explicitly converted
+to `dropped` with a reason. Only then may the mission be declared *"complete with N dropped: <ids +
+reasons>"*. Never close with a non-terminal row, and never drop silently. Enumerate every dispatched
+unit in the final summary.
+
+**Pull cadence (no push signal):** a session-native control plane has no "worker done" event to wake
+it. After dispatching a wave, define the next checkpoint trigger — a follow-up turn, a status-table
+poll, or a user ping — and never leave a wave un-joined.
 
 For PR-bound work, keep the control session responsible for final PR readiness and review routing.
 
@@ -183,15 +332,21 @@ For PR-bound work, keep the control session responsible for final PR readiness a
 - Do not assume a named app connector exists; discover it and fall back honestly.
 - Do not silently create branches, commits, pushes, or PRs; follow the user's consent and repo rules.
 - Do not ask workers to share secrets or sensitive data across sessions.
+- Worker subagents are leaf helpers — they MUST NOT create or steer further persistent sessions. The
+  hierarchy is exactly two levels (control -> worker -> subagents); a worker that needs another full
+  workstream reports that need to control.
+- Enforce the concurrency and total-fan-out caps; never exceed them silently. Dropped, skipped, or
+  failed units MUST be recorded with a reason (no silent truncation).
 - If using an in-place checkout, be extra careful: other user-owned changes may already exist.
 - If the plan changes materially, update the user and the workers before continuing.
 
 ## Recommended reporting format
 
-Use a compact control-plane update:
+Use a compact control-plane update (rows derived from the manifest):
 
 ```markdown
 **Status:** <on track | blocked | needs decision | complete>
+**Budget:** in-flight <X/Y> · spawned <A/B> · wave <N> (empty-streak <E>)
 
 | Workstream | Session | Scope | State | Evidence |
 |---|---|---|---|---|
