@@ -113,6 +113,7 @@ skills/
 |-------|-------------|
 | [agent-teams-simplify-and-harden](skills/agent-teams-simplify-and-harden/) | Implementation + audit loop using parallel agent teams with structured simplify, harden, and document passes |
 | [context-surfing](skills/context-surfing/) | Monitors context window health and rides peak context quality for maximum output fidelity during multi-step execution |
+| [control-session-orchestrator](skills/control-session-orchestrator/) | Control-plane workflow for coordinating multi-agent, multi-session project work from Codex, GitHub Copilot, or agent-app sessions |
 | [intent-framed-agent](skills/intent-framed-agent/) | Captures a lightweight intent contract at execution start and monitors coding-task drift until resolution |
 | [plan-interview](skills/plan-interview/) | Runs a structured interview before planning non-trivial implementations |
 | [self-healing](skills/self-healing/) | Active runtime recovery — diagnose, patch, verify, file the verified fix when a command, test, helper, env, or external service fails mid-task |

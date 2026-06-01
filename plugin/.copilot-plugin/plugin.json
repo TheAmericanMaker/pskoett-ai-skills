@@ -17,6 +17,8 @@
     "eval-creator",
     "pre-flight-check",
     "context-management",
+    "control-session",
+    "multi-agent",
     "self-improvement",
     "code-quality",
     "security",

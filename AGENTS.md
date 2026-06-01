@@ -30,6 +30,7 @@ Use these as canonical references when creating or updating skills.
 
 Public skills (`skills/`):
 - `skills/context-surfing/SKILL.md` - Monitor context window health and ride peak context quality during execution.
+- `skills/control-session-orchestrator/SKILL.md` - Control-plane workflow for coordinating multi-agent, multi-session project work from Codex, GitHub Copilot, or agent-app sessions.
 - `skills/intent-framed-agent/SKILL.md` - Capture intent at execution start and monitor coding-task scope drift.
 - `skills/plan-interview/SKILL.md` - Structured interview before implementation planning.
 - `skills/self-healing/SKILL.md` - Active runtime recovery: diagnose, patch, verify, file the verified fix when something breaks mid-task. Pairs with self-improvement (verifies + persists; self-improvement promotes).

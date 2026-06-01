@@ -1,0 +1,33 @@
+{
+  "skill_name": "control-session-orchestrator",
+  "evals": [
+    {
+      "id": 1,
+      "name": "multi-session-audit",
+      "prompt": "Act as the pmx-canvas control session and coordinate a workflow to audit MCP tool parity across server, HTTP API, SDK, and docs. Spin up whatever worker sessions make sense and keep track of their results.",
+      "expected_output": "The agent should use the control-session-orchestrator skill, define a control-plane topology, assign scoped worker sessions for independent surfaces, specify reporting and verification expectations, and track status centrally instead of trying to audit everything inline.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "implementer-and-verifier",
+      "prompt": "We need a safe parallel workflow for a risky canvas refactor: one agent should implement, another should independently review and verify. Please coordinate it from this session.",
+      "expected_output": "The agent should use the skill to frame mission, create or route to separate implementer and verifier sessions, prevent overlapping scope drift, require verification evidence, and consolidate the final decision in the control session.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "codex-control-thread",
+      "prompt": "Use this Codex app thread as the pmx-canvas control session. Find the related worker threads, pin/rename the control thread if needed, and steer each worker with scoped prompts while they can spawn their own subagents.",
+      "expected_output": "The agent should use the control-session-orchestrator skill, identify Codex app thread/session tools as the active control surface, avoid assuming GitHub Copilot-only tool names, define worker ownership and reporting, and keep central status in the control thread.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "avoid-over-orchestration",
+      "prompt": "Fix the typo in the README heading.",
+      "expected_output": "The agent should not use heavyweight control-session orchestration. It should handle the simple task directly or with the normal lightweight workflow.",
+      "files": []
+    }
+  ]
+}
