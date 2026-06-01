@@ -61,7 +61,7 @@ If the user described the task area, filter learnings to:
 - Entries whose `Area` matches the task
 - Entries whose `Related Files` overlap with likely-touched files
 - Entries with `Priority: high/critical` regardless of area
-- Entries with `Status: promotion_ready` (need attention)
+- Entries with `Recurrence-Count` >= 3 (promotion-ready by recurrence threshold — need attention)
 
 ### Step 5: Output
 
@@ -73,7 +73,7 @@ If the user described the task area, filter learnings to:
 ### Relevant Learnings
 | ID | Summary | Recurrence | Priority | Status |
 |----|---------|-----------|----------|--------|
-| LRN-... | ... | 3 | high | promotion_ready |
+| LRN-... | ... | 3 | high | pending |
 | ERR-... | ... | 2 | medium | pending |
 
 ### Key Warnings

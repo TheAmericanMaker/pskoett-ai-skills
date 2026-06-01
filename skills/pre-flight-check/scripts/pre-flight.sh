@@ -22,12 +22,27 @@ else
   error_count=0
 fi
 
-# Count promotion-ready patterns
-if [ -f "$LEARNINGS_DIR/LEARNINGS.md" ]; then
-  promo_count=$(grep -c 'promotion_ready' "$LEARNINGS_DIR/LEARNINGS.md" 2>/dev/null) || promo_count=0
+# Count VERIFIED heals on file (filed by self-healing). Only `Status: verified`
+# entries count — `pending-verify` / `abandoned` heals are NOT known-good fixes
+# and must not be surfaced as such. Surfaced so the agent applies a proven fix
+# before reinventing one.
+if [ -f "$LEARNINGS_DIR/HEALS.md" ]; then
+  heal_count=$(grep -cE '^\*\*Status\*\*:[[:space:]]*verified' "$LEARNINGS_DIR/HEALS.md" 2>/dev/null) || heal_count=0
 else
-  promo_count=0
+  heal_count=0
 fi
+
+# Count promotion-ready patterns: entries whose Recurrence-Count has reached the
+# promotion threshold (>= 3). No skill writes a "promotion_ready" status, so
+# readiness is computed from the Recurrence-Count field that self-improvement and
+# self-healing actually record. Scans both LEARNINGS.md and HEALS.md.
+promo_count=0
+for f in "$LEARNINGS_DIR/LEARNINGS.md" "$LEARNINGS_DIR/HEALS.md"; do
+  if [ -f "$f" ]; then
+    n=$(grep -oiE 'Recurrence-Count[^0-9]*[0-9]+' "$f" 2>/dev/null | grep -oE '[0-9]+$' | awk '$1>=3' | wc -l | tr -d ' ')
+    promo_count=$((promo_count + ${n:-0}))
+  fi
+done
 
 # Count failed evals
 if [ -f "$EVALS_DIR/EVAL_INDEX.md" ]; then
@@ -44,12 +59,12 @@ else
 fi
 
 # Calculate total signals
-signals=$((learning_count + error_count + promo_count + eval_fail_count + handoff_count))
+signals=$((learning_count + error_count + heal_count + promo_count + eval_fail_count + handoff_count))
 
 # Only output if there are signals
 if [ "$signals" -gt 0 ]; then
   echo "<pre-flight-check>"
-  echo "Active learnings: $learning_count | Recent errors: $error_count | Promotion-ready: $promo_count | Failed evals: $eval_fail_count | Handoffs: $handoff_count"
+  echo "Active learnings: $learning_count | Recent errors: $error_count | Verified heals: $heal_count | Promotion-ready: $promo_count | Failed evals: $eval_fail_count | Handoffs: $handoff_count"
 
   # Surface high-priority items
   if [ "$promo_count" -gt 0 ]; then
@@ -63,6 +78,10 @@ if [ "$signals" -gt 0 ]; then
 
   if [ "$handoff_count" -gt 0 ]; then
     echo "Unread handoff files from previous sessions — read before starting new work."
+  fi
+
+  if [ "$heal_count" -gt 0 ]; then
+    echo "Verified heals on file in HEALS.md — check for a known fix before reinventing one."
   fi
 
   echo "</pre-flight-check>"

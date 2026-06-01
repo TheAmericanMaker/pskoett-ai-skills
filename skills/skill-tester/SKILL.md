@@ -37,7 +37,7 @@ For each skill directory:
 | Check | Rule | Severity |
 |-------|------|----------|
 | Name matches folder | Frontmatter `name` == directory name | Error |
-| Line limit | SKILL.md under 500 lines (soft), under 600 lines (hard) | Warning / Error |
+| Line limit | SKILL.md at or under 600 lines | Error |
 | No README.md | Skill folders must not contain README.md | Error |
 | Scripts executable | All `.sh` files in `scripts/` must have execute permission | Error |
 | References exist | Files referenced in SKILL.md body actually exist in `references/` | Warning |

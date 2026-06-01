@@ -359,7 +359,7 @@ Add to `.claude/settings.json`:
 ```json
 {
   "hooks": {
-    "UserPromptSubmit": [{
+    "SessionStart": [{
       "matcher": "",
       "hooks": [{
         "type": "command",

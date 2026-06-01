@@ -171,6 +171,8 @@ Monitor agent messages. When all implementation agents report done:
 2. Run tests to verify all pass
 3. If either fails, fix or assign fixes before proceeding
 
+> Optional: delegate this compile/test step to the `verify-gate` skill instead of running ad-hoc commands, for consistency with the inner-loop pipeline. verify-gate runs the project's compile/test/lint and returns a pass/fail signal with diagnostics.
+
 Before spawning auditors, collect the list of files modified in this session:
 ```bash
 git diff --name-only <base-branch>  # or: git diff --name-only HEAD~N

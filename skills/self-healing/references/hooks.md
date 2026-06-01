@@ -44,15 +44,15 @@ If you're also using self-improvement's `PostToolUse` hook, chain them. Both are
 }
 ```
 
-### Passing Active-Skill into new-heal.sh
+### Passing Active-Context into new-heal.sh
 
-When invoking the helper script from inside a skill flow, set `ACTIVE_SKILL` so it lands in the HEAL entry:
+When invoking the helper script from inside a skill flow, set `ACTIVE_CONTEXT` so it lands in the HEAL entry's `Active-Context` field:
 
 ```bash
-ACTIVE_SKILL=verify-gate ./skills/self-healing/scripts/new-heal.sh node_version_mismatch env_drift
+ACTIVE_CONTEXT=verify-gate ./skills/self-healing/scripts/new-heal.sh node_version_mismatch env_drift
 ```
 
-The script reads `$ACTIVE_SKILL` from the environment and falls back to `none`.
+The script reads `$ACTIVE_CONTEXT` from the environment; if it is unset, the `Active-Context` line is omitted.
 
 ## GitHub Copilot
 

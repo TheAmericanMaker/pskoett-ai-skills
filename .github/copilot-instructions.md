@@ -34,6 +34,11 @@ Public skills (`skills/`):
 - `skills/learning-aggregator/SKILL.md` - Cross-session analysis of accumulated .learnings/ files for pattern detection and promotion.
 - `skills/pre-flight-check/SKILL.md` - Session-start scan that surfaces relevant learnings and eval status before work begins.
 - `skills/eval-creator/SKILL.md` - Creates permanent eval cases from promoted learnings and runs regression checks.
+- `skills/skill-tester/SKILL.md` - Validates interactive skills against the Agent Skills spec and project conventions.
+- `skills/skill-tester-ci/SKILL.md` - Validates CI skills: gh-aw workflow compilation, permission correctness, and structural conventions.
+
+Plugin agents (`plugin/agents/`, shipped only in the full plugin bundle — not installable via `gh skill` / `npx skills`):
+- `plugin/agents/harness-updater.md` - Outer-loop **encode** step: applies promotion candidates to `CLAUDE.md` / `AGENTS.md` / `.github/copilot-instructions.md`. Referenced by name in several skills, but it is an agent, not a skill.
 
 Local Claude skills (`.claude/skills/`):
 - `.claude/skills/context-surfing/SKILL.md` - Local copy of the context-surfing workflow.

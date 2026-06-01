@@ -114,6 +114,9 @@ safe-outputs:
     max: 1
   upload-artifact:
     max-uploads: 1
+  create-pull-request:
+    max: 1
+    draft: true
 
 tracker-id: eval-creator
 
@@ -148,7 +151,7 @@ strict: true
 
 10. Post a summary comment listing the new eval cases created.
 
-11. Commit the new files with message: "chore: add eval cases from learning-aggregator-ci [skip ci]".
+11. Emit the new files via the `create-pull-request` safe-output (title: "chore: add eval cases from learning-aggregator-ci"). gh-aw opens the PR from a separate job that holds the write scope — the agentic job stays `contents: read` and must not `git commit` directly.
 
 12. Do not modify source code files. Only write to `.evals/` directory.
 ```

@@ -119,7 +119,7 @@ If the re-run isn't feasible (the check requires secrets only available in produ
 - Promotion threshold (same as interactive):
   - `Recurrence-Count >= 3`
   - Seen across at least 2 distinct PRs/tasks
-  - Within a 30-day window
+  - The fix is generalizable (not project-specific)
 - On promotion: append a `Handoff` block to the existing HEAL with a `Promotion Target` (CLAUDE.md / AGENTS.md / .github/copilot-instructions.md / new-skill) and a one-line `Distilled Rule`
 - `self-improvement-ci` consumes the Handoff blocks and proposes the promotion as a PR
 

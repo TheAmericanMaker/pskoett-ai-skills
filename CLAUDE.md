@@ -34,6 +34,11 @@ Public skills (`skills/`):
 - `skills/learning-aggregator/SKILL.md` - Cross-session analysis of accumulated .learnings/ files for pattern detection and promotion.
 - `skills/pre-flight-check/SKILL.md` - Session-start scan that surfaces relevant learnings and eval status before work begins.
 - `skills/eval-creator/SKILL.md` - Creates permanent eval cases from promoted learnings and runs regression checks.
+- `skills/skill-tester/SKILL.md` - Validates interactive skills against the Agent Skills spec and project conventions.
+- `skills/skill-tester-ci/SKILL.md` - Validates CI skills: gh-aw workflow compilation, permission correctness, and structural conventions.
+
+Plugin agents (`plugin/agents/`, shipped only in the full plugin bundle — not installable via `gh skill` / `npx skills`):
+- `plugin/agents/harness-updater.md` - Outer-loop **encode** step: applies promotion candidates to `CLAUDE.md` / `AGENTS.md` / `.github/copilot-instructions.md`. Referenced by name in several skills, but it is an agent, not a skill.
 
 Local Claude skills (`.claude/skills/`):
 - `.claude/skills/context-surfing/SKILL.md` - Local copy of the context-surfing workflow.
@@ -59,8 +64,23 @@ Each skill folder must contain:
 - The `name` field in frontmatter must match the folder name
 - No README.md files inside skill folders (per spec)
 - Use lowercase with hyphens for skill names
-- Keep SKILL.md under 500 lines; use references/ for detailed content
+- Keep SKILL.md under 600 lines; use references/ for detailed content
 - When tool calls are referenced, add Copilot-compatible guidance for asking in chat
+
+## Plugin Bundle Sync
+
+`plugin/skills/` is generated from `skills/` — do not hand-edit it. The public `skills/` copy is the single source of truth for each SKILL.md body and description; the plugin copy only adds plugin-registration frontmatter (`hooks`, `user-invocable`, `argument-hint`). After changing any `skills/` source, resync:
+
+```bash
+./scripts/sync-plugin.sh            # sync every bundled skill
+./scripts/sync-plugin.sh <skill>    # sync one
+```
+
+Intentionally NOT bundled into `plugin/skills/`:
+- `skill-tester`, `skill-tester-ci` — internal dev/validation tooling, not end-user skills.
+- `self-improvement-ci`, `simplify-and-harden-ci` — not currently shipped in the bundle.
+
+`harness-updater` is a plugin **agent** (`plugin/agents/`), not a skill, and ships only in the full plugin bundle.
 
 ## Self-Healing Workflow
 

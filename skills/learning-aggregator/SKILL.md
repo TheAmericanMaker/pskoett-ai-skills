@@ -14,7 +14,7 @@ Without this skill, `.learnings/` is a write-only log. Patterns accumulate but n
 - **Weekly cadence** — scheduled or manual, review accumulated learnings
 - **Before major tasks** — check if the task area has known patterns
 - **After a burst of sessions** — consolidate findings from a sprint or incident
-- **When self-improvement flags `promotion_ready`** — verify the flag with full context
+- **When an entry's `Recurrence-Count` reaches the promotion threshold (>= 3)** — verify the candidate with full context
 
 ## What It Produces
 
@@ -36,7 +36,7 @@ Parse each entry's metadata:
 - `Recurrence-Count` — how many times this pattern has been seen
 - `First-Seen` / `Last-Seen` — date range
 - `Priority` — low / medium / high / critical
-- `Status` — pending / promotion_ready / promoted / dismissed
+- `Status` — pending / in_progress / resolved / wont_fix / promoted / promoted_to_skill (the writer's vocabulary; promotion readiness is computed from `Recurrence-Count`, not stored as a status)
 - `Area` — frontend / backend / infra / tests / docs / config
 - `Related Files` — which parts of the codebase are affected
 - `Source` — conversation / error / user_feedback / simplify-and-harden
