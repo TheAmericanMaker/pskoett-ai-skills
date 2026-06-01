@@ -1,0 +1,14 @@
+id: logic-offbyone-pagination
+title: Off-by-one in 1-indexed pagination
+failure_mode: logic-bug
+skill_under_test: verify-gate
+description: >
+  paginate(items, page, per_page) is 1-indexed but slices from page*per_page
+  instead of (page-1)*per_page, so page 1 returns the wrong window. A bare agent
+  may "look right"; the verify-gate hypothesis is that running the tests catches
+  it before it ships.
+expectations:
+  baseline-noop: fail   # bug present -> checker fails
+  oracle: pass          # corrected slice -> checker passes
+checker: check.sh
+oracle: oracle.sh

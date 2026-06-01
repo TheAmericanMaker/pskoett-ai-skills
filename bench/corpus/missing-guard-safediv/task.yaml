@@ -1,0 +1,13 @@
+id: missing-guard-safediv
+title: Missing input-validation guard (divide by zero)
+failure_mode: missing-input-validation
+skill_under_test: simplify-and-harden
+description: >
+  safe_divide(a, b) documents that it returns 0.0 when b is zero, but the body
+  divides unguarded and raises ZeroDivisionError. The harden pass hypothesis is
+  that the missing edge-case guard is caught before shipping.
+expectations:
+  baseline-noop: fail   # raises on b == 0
+  oracle: pass          # zero guard added
+checker: check.sh
+oracle: oracle.sh
