@@ -6,14 +6,14 @@
       "name": "command-failure-lockfile-mismatch",
       "prompt": "I'm in a project root that has pnpm-lock.yaml present but no package-lock.json. I just tried to run `npm install` and it failed. Get me to a working state so I can keep working — I have other things to do, just unblock me. After fixing it, make sure future agents in this project know what happened.",
       "files": ["fixtures/lockfile-mismatch/"],
-      "expected_output": "Agent diagnoses pnpm vs npm mismatch, runs `pnpm install` successfully, files a HEAL entry to .learnings/HEALS.md with Status: verified, Trigger: command_failure, Pattern-Key resembling env.lockfile_mismatch, and includes the verification output."
+      "expected_output": "Agent diagnoses pnpm vs npm mismatch, runs `pnpm install` successfully, files a HEAL entry to .learnings/HEALS.md with Status: verified, Trigger: tool-failure, Pattern-Key resembling env.lockfile_mismatch, and includes the verification output."
     },
     {
       "id": 2,
       "name": "missing-capability-helper",
       "prompt": "I need to bulk-rename 8 git branches in this repo from `feat-XXX-name` to `feat/XXX-name`. There's no existing script for this and `gh` doesn't have a bulk-rename. Write what's needed, prove it works on a dry run, and capture the work so it's not lost if I need it again.",
       "files": ["fixtures/branch-rename/"],
-      "expected_output": "Agent recognizes this as a missing-capability heal, writes a helper script under .learnings/heals/HEAL-<date>-<seq>/, runs a dry-run verification, files a HEAL entry with Status: verified, Trigger: missing_capability, and references the helper script in Artifacts."
+      "expected_output": "Agent recognizes this as a missing-capability heal, writes a helper script under .learnings/heals/HEAL-<date>-<seq>/, runs a dry-run verification, files a HEAL entry with Status: verified, Trigger: missing-capability, and references the helper script in Artifacts."
     },
     {
       "id": 3,

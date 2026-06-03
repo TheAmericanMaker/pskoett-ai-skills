@@ -67,6 +67,8 @@ TODO — what was run after the fix, what it returned. **Update Status to "verif
 ---
 EOF
 
+# stdout = the HEAL-ID alone, so `ID=$(new-heal.sh ...)` captures it cleanly.
+# Human guidance goes to stderr.
 echo "$HEAL_ID"
-echo "$HEALS_FILE"
-echo "(create .learnings/heals/$HEAL_ID/ only if you generate artifacts to put there)"
+echo "$HEALS_FILE" >&2
+echo "(create .learnings/heals/$HEAL_ID/ only if you generate artifacts to put there)" >&2

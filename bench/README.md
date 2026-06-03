@@ -85,6 +85,13 @@ not just recurrence — closing the loop onto the metric.
 
 ## Status
 
-Spike. Floor and ceiling work and discriminate across the seed corpus (3 tasks).
+Spike. Floor and ceiling work and discriminate across the seed corpus (4 tasks).
 Agent solvers + the longitudinal curve are the next build; the substrate is ready
 for them.
+
+Corpus → skill-under-test:
+- `logic-offbyone-pagination`, `missing-guard-safediv` → verify-gate / simplify-and-harden
+- `wrong-test-assumption-viewport` → verify-gate (built from a captured learning)
+- `selfheal-missing-helper` → self-healing (checker requires both the fix **and** a
+  filed `verified` HEAL — the heal artifact is the measured behavior, so an agent
+  that only patches and moves on fails the task)

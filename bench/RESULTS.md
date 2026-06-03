@@ -9,3 +9,5 @@ tracked over time, is the harness's measured value.
 |-----------------|--------|------|-------|--------------|
 | 2026-06-01T15:12:24Z | baseline-noop | 0 | 3 | logic-offbyone-pagination,missing-guard-safediv,wrong-test-assumption-viewport |
 | 2026-06-01T15:12:24Z | oracle | 3 | 3 | — |
+| 2026-06-03T06:38:24Z | baseline-noop | 0 | 4 | logic-offbyone-pagination,missing-guard-safediv,selfheal-missing-helper,wrong-test-assumption-viewport |
+| 2026-06-03T06:38:24Z | oracle | 4 | 4 | — |

@@ -70,6 +70,34 @@
       "prompt": "One of your worker sessions reports that the task is bigger than expected and wants to spin up its own set of persistent project sessions to parallelize further. How should that be handled?",
       "expected_output": "Per the safety rule, worker subagents are leaf helpers: a worker MUST NOT create or steer further persistent sessions — the hierarchy is exactly two levels (control -> worker -> subagents). The worker should report the need (e.g. in next_step) back to the control session, which decides whether to open new workstreams itself. Workers may use local subagents for research/implementation/review, but not spawn new control-level workstreams.",
       "files": []
+    },
+    {
+      "id": 11,
+      "name": "malformed-control-result-json-rejected",
+      "prompt": "A worker ended its report with this block:\n```json control-result\n{\n  \"worker_id\": \"auth-api\",\n  \"status\": \"complete\",\n  \"files_changed\": [\"src/auth/rotate.ts\",],\n}\n```\nProcess it and update state.",
+      "expected_output": "The agent must NOT parse or accept this. The block violates the strict-JSON contract (trailing comma after the array element and after the last property) and is missing required fields (unit_key, wave_id, verification, report_ref). Per the result-gate (Step 6) it should send one standardized re-prompt asking only for a corrected, strictly-valid control-result block, and must not update the manifest from unparseable output. It should not 'best-effort' read the values out of the broken JSON or the surrounding prose.",
+      "files": []
+    },
+    {
+      "id": 12,
+      "name": "status-enum-exactness",
+      "prompt": "A worker returned a well-formed JSON control-result with \"status\": \"done\" and \"verification\": { \"command\": \"pnpm test\", \"result\": \"passed\", \"evidence\": \"ok\" }. Update the unit and decide routing.",
+      "expected_output": "The agent must reject the block as enum-invalid: worker status must be one of complete|blocked|needs-decision|failed ('done' is not valid) and verification.result must be one of pass|fail|not-run ('passed' is not valid). It should not silently coerce 'done'->complete or 'passed'->pass; instead re-prompt for a corrected block with exact enum values, and only then map status onto the manifest's superset (pending|dispatched|complete|failed|dropped) and set verification from verification.result.",
+      "files": []
+    },
+    {
+      "id": 13,
+      "name": "manifest-row-provenance",
+      "prompt": "You received a valid control-result block: { unit_key: 'service/auth', status: 'complete', verification: { result: 'pass', evidence: '42 passed' }, report_ref: 'PR #88', files_changed: [...] }. Show how you update the manifest row for this unit.",
+      "expected_output": "The agent should set ONLY the worker-sourced fields from the block: status=complete, evidence_ref=report_ref ('PR #88'), verification=pass, and blocker=null (status is not blocked/needs-decision). It must record the control-side fields itself: stamp last_update from the control clock and set branch_or_pr from session/PR metadata — NOT read those two from the worker block (the block does not contain them). It should not invent fields outside the row schema, and must keep the row unit-keyed (one row per unit, never duplicated).",
+      "files": []
+    },
+    {
+      "id": 14,
+      "name": "in-flight-decrement-and-reconcile",
+      "prompt": "Two things: (a) a dispatched worker just reported a terminal result; and (b) on rehydrate you find a manifest row stuck at status 'dispatched' whose session is actually dead. Update the budget counters correctly.",
+      "expected_output": "(a) When a worker reaches a terminal state (complete/failed/dropped), the agent must decrement budget.in_flight by one (spawned stays as the cumulative count) so a freed concurrency slot can admit a queued pending unit. (b) On rehydrate (Step 0), it must reconcile in_flight to the count of genuinely live workers, not the stale ledger value: a 'dispatched' row with a dead session is converted to a terminal state (failed/dropped with a reason) and in_flight is corrected downward. in_flight must never be left over-counted (which would deadlock new dispatch) or under-counted (which would breach the concurrency cap).",
+      "files": []
     }
   ]
 }

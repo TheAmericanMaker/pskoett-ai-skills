@@ -13,6 +13,8 @@ If you want to improve agent output over time, you need two loops, not one. The 
 
 `skill-pipeline` ties these pieces together by classifying the task and routing it through the right combination at the right depth.
 
+One skill sits outside the two loops by design: `control-session-orchestrator` is an orchestration-layer skill, not an inner/outer-loop step. It runs *above* the pipeline — coordinating multi-agent, multi-session work from a Codex, Copilot, or agent-app control session — and is invoked directly rather than routed by `skill-pipeline`.
+
 ## Install
 
 Install as a Claude Code plugin from this repo's marketplace. Run each command from inside Claude Code:

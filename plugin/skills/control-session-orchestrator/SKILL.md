@@ -118,7 +118,9 @@ unit is never dispatched twice — this is the dedup ledger).
       "status": "pending",
       "wave_id": "w1",
       "last_update": "ISO-8601",
-      "evidence_ref": "report_ref from the result block"
+      "evidence_ref": "report_ref from the result block",
+      "verification": "not-run",
+      "blocker": null
     }
   ],
   "decisions": [],
@@ -257,13 +259,17 @@ workspace labels if exposed.
 ### 5. Track state centrally
 
 The control-state manifest is the single source of truth — update it every turn, not the
-conversation. From each worker's result block, set the unit's `status`, `branch_or_pr`,
-`last_update`, and `evidence_ref`. Keep the control session's context focused on summaries and
-decisions, not full transcripts; the full report lives at `report_ref`.
+conversation. From each worker's result block, set the unit's `status`, `evidence_ref` (= the block's
+`report_ref`), `verification` (= the block's `verification.result`), and — when `status` is `blocked`
+or `needs-decision` — `blocker` (the block's blocking reason; otherwise `null`). The control session
+records the remaining fields itself: stamp `last_update` from its own clock, and set `branch_or_pr`
+from the worker's session/PR metadata when known (workers don't self-report it in the block). Keep the
+control session's context focused on summaries and decisions, not full transcripts; the full report
+lives at `report_ref`.
 
 Track at least, per unit: `unit_key`, `worker_id`, `session_ref`, scope, status, branch/PR, last
-update, blocker, and verification state. Canvas nodes or a SQL/todo table are good backends for the
-manifest when the app exposes them.
+update, blocker, and verification state — matching the row schema above. Canvas nodes or a SQL/todo
+table are good backends for the manifest when the app exposes them.
 
 ### 6. Route follow-ups (result-gate)
 

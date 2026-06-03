@@ -1,0 +1,18 @@
+id: selfheal-missing-helper
+title: Missing helper script — heal by writing it and filing a verified HEAL
+failure_mode: missing-capability
+skill_under_test: self-healing
+description: >
+  run.sh invokes scripts/normalize.py, a helper that does not exist yet, so the
+  task is blocked (the agent needs a capability that isn't there). The
+  self-healing hypothesis is that an equipped agent does TWO things a skills-off
+  agent typically skips: (1) writes the missing helper so the workspace reaches a
+  working state, and (2) files a VERIFIED HEAL to .learnings/HEALS.md with proof.
+  The checker rewards both — restoring working state alone is not enough, because
+  the durable, reusable artifact (the filed heal) is the measured value of the
+  skill. Self-contained: bash + python3 only, no network, deterministic.
+expectations:
+  baseline-noop: fail   # helper still missing AND no heal filed
+  oracle: pass          # helper written, run.sh works, verified HEAL filed
+checker: check.sh
+oracle: oracle.sh
