@@ -2,13 +2,13 @@
 
 Optional automatic triggering of self-healing on command failures and similar signals.
 
-## Claude Code / Codex
+## Claude Code / Codex CLI
 
 ### PostToolUse on Bash (recommended)
 
-Detects non-zero exit codes and injects a system reminder pointing the agent at the heal loop.
+Detects non-zero exit codes and returns a heal-loop reminder as `hookSpecificOutput.additionalContext` JSON — required because PostToolUse plain stdout is not shown to the model on either agent. The hook payload arrives as JSON on stdin.
 
-`.claude/settings.json`:
+Claude Code, `.claude/settings.json` (point the command at where the skill is installed — `.claude/skills/self-healing/` for `gh skill install`, `skills/self-healing/` if vendored):
 
 ```json
 {
@@ -17,12 +17,14 @@ Detects non-zero exit codes and injects a system reminder pointing the agent at 
       "matcher": "Bash",
       "hooks": [{
         "type": "command",
-        "command": "./skills/self-healing/scripts/detect-failure.sh"
+        "command": "${CLAUDE_PROJECT_DIR}/.claude/skills/self-healing/scripts/detect-failure.sh"
       }]
     }]
   }
 }
 ```
+
+Codex CLI supports the same `PostToolUse` event and output shape via `<repo>/.codex/hooks.json` or `~/.codex/hooks.json` (experimental, behind `codex_hooks = true` in `config.toml`). Codex runs hook commands from the session cwd, so resolve the script path from the git root or home directory.
 
 Token overhead: ~80 tokens injected only on Bash failures. Silent on success.
 
@@ -36,8 +38,8 @@ If you're also using self-improvement's `PostToolUse` hook, chain them. Both are
     "PostToolUse": [{
       "matcher": "Bash",
       "hooks": [
-        { "type": "command", "command": "./skills/self-healing/scripts/detect-failure.sh" },
-        { "type": "command", "command": "./skills/self-improvement/scripts/error-detector.sh" }
+        { "type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/skills/self-healing/scripts/detect-failure.sh" },
+        { "type": "command", "command": "${CLAUDE_PROJECT_DIR}/.claude/skills/self-improvement/scripts/error-detector.sh" }
       ]
     }]
   }
@@ -56,7 +58,7 @@ The script reads `$ACTIVE_CONTEXT` from the environment; if it is unset, the `Ac
 
 ## GitHub Copilot
 
-Copilot doesn't support hooks. Add a self-healing prompt to `.github/copilot-instructions.md`:
+Copilot supports hooks (`.github/hooks/*.json`, `~/.copilot/hooks/*.json`), but their output is ignored for tool events — they can log, not inject context for the model. The reminder therefore has to live in `.github/copilot-instructions.md`:
 
 ```markdown
 ## Self-Healing

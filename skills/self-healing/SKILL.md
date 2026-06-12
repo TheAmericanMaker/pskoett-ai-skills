@@ -239,6 +239,7 @@ Add a `Handoff` block to an existing entry when **all** are true:
 
 - `Recurrence-Count >= 3`
 - Seen across at least 2 distinct tasks
+- Within a 30-day window (matches the promotion rule in `self-improvement` and the aggregators)
 - The fix is generalizable (not project-specific in a way that's already in a memory file)
 
 ```markdown

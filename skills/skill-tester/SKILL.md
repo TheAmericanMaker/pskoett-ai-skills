@@ -40,10 +40,10 @@ For each skill directory:
 | Line limit | SKILL.md at or under 600 lines | Error |
 | No README.md | Skill folders must not contain README.md | Error |
 | Scripts executable | All `.sh` files in `scripts/` must have execute permission | Error |
-| References exist | Files referenced in SKILL.md body actually exist in `references/` | Warning |
+| References exist | Files referenced in SKILL.md body actually exist in `references/` (agent-performed — not covered by run-tests.sh) | Warning |
 | Description non-empty | Description field is present and non-empty | Error |
 
-### 3. Cross-Reference Validation
+### 3. Cross-Reference Validation (agent-performed — not covered by run-tests.sh)
 
 Verify that all skills listed in these files actually exist as directories:
 
@@ -62,14 +62,14 @@ For each skill with a `scripts/` directory:
 # Syntax check
 bash -n scripts/*.sh
 
-# Verify shebang
-head -1 scripts/*.sh | grep -q "^#!/bin/bash"
+# Verify bash shebang (either form used in this repo)
+head -1 scripts/*.sh | grep -qE "^#!(/bin/bash|/usr/bin/env bash)"
 
 # Verify executable
 test -x scripts/*.sh
 ```
 
-### 5. Plugin Skill Validation
+### 5. Plugin Skill Validation (agent-performed — not covered by run-tests.sh)
 
 For skills that exist in both `skills/` and `plugin/skills/`:
 
@@ -111,6 +111,8 @@ Or run the script directly:
 ```bash
 bash skills/skill-tester/scripts/run-tests.sh
 ```
+
+Coverage note: `run-tests.sh` automates Checks 1, 2, and 4 (minus the references-exist check). Checks 3 and 5 and the references-exist check are performed by the agent when `/skill-tester` is invoked — a green script run alone does not mean they passed.
 
 ## What This Skill Does NOT Do
 

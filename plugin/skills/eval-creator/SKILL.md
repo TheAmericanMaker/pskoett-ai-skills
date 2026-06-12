@@ -177,7 +177,7 @@ For each eval case:
 ## Integration
 
 ### Upstream
-- **harness-updater** flags eval candidates after promoting a pattern
+- **harness-updater** flags eval candidates after promoting a pattern (harness-updater is a plugin-bundle agent, `plugin/agents/harness-updater.md`; without the plugin, the human applying promotions manually flags eval candidates from the gap report instead)
 - **learning-aggregator** identifies patterns with clear pass/fail conditions
 
 ### Downstream

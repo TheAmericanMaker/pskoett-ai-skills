@@ -6,9 +6,10 @@
 
 set -e
 
+# Automates SKILL.md Checks 1, 2, and 4. Checks 3 (cross-references) and
+# 5 (plugin validation) are agent-performed — see SKILL.md.
 REPO_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 SKILLS_DIR="$REPO_ROOT/skills"
-PLUGIN_DIR="$REPO_ROOT/plugin/skills"
 VALIDATE="$REPO_ROOT/.claude/skills/skill-creator/scripts/quick_validate.py"
 
 pass=0; warn=0; fail=0
@@ -73,6 +74,12 @@ check_skill() {
       # Syntax check
       if ! bash -n "$script" 2>/dev/null; then
         failures="${failures}\n  ✗ $skill: $(basename $script) has syntax errors"
+        fail=$((fail + 1))
+        return
+      fi
+      # Shebang check (either bash form)
+      if ! head -1 "$script" | grep -qE "^#!(/bin/bash|/usr/bin/env bash)"; then
+        failures="${failures}\n  ✗ $skill: $(basename $script) missing bash shebang"
         fail=$((fail + 1))
         return
       fi

@@ -74,7 +74,7 @@ Example-only template lives in `references/workflow-example.md`.
 Keep it outside `.github/workflows` until you explicitly want automation enabled.
 
 When ready to enable:
-1. Copy `references/workflow-example.md` template block into `.github/workflows/simplify-and-harden-ci.md`.
+1. Copy `references/workflow-example.md` template block into `.github/workflows/simplify-and-harden-ci.md`. (The `.md` extension is intentional: gh-aw workflows are markdown files that `gh aw compile` compiles into the `.lock.yml` files GitHub Actions actually runs. This is not a standard hand-written Actions YAML workflow.)
 2. Compile and validate workflow:
 
 ```bash

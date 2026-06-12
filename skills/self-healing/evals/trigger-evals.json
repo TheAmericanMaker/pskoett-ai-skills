@@ -1,0 +1,82 @@
+[
+  {
+    "query": "ok i just ran `pnpm test` and 3 tests failed with `ModuleNotFoundError: No module named 'pydantic'`. the project has a .venv but apparently my shell isn't using it. just get me unblocked and make sure this doesn't happen again next session",
+    "should_trigger": true
+  },
+  {
+    "query": "i need to bulk-rename 12 branches matching `release-*` to `releases/*` and there's nothing in scripts/ for this. write what's needed, prove it on a dry run first, save it somewhere reusable",
+    "should_trigger": true
+  },
+  {
+    "query": "the `terraform plan` step in my workflow is choking on a provider version mismatch — the lock says 4.50 but the action is pulling 4.42 from a cache. figure out the real fix not a band-aid",
+    "should_trigger": true
+  },
+  {
+    "query": "vitest snapshot for Card.tsx flakes about every 3rd run. last person tried stubbing the clock and it still flakes — i think there's a second random thing in there. don't pretend it's fixed if it's not",
+    "should_trigger": true
+  },
+  {
+    "query": "claude code's `gh api` calls are hitting the secondary rate limit when i loop through 200 PRs. patch this so the next loop doesn't trip the same wall, and write down what you did",
+    "should_trigger": true
+  },
+  {
+    "query": "build is broken — `cargo build` is failing on stable rust because somewhere in tower-http 0.5 they renamed a feature flag. unblock me and leave a note so the next agent knows about the rename",
+    "should_trigger": true
+  },
+  {
+    "query": "this `docker compose up` command is failing because port 5432 is bound by the postgres app i installed last week. fix it and capture the recipe so future-me doesn't waste 20 minutes again",
+    "should_trigger": true
+  },
+  {
+    "query": "the snapshot test in apps/web/src/__tests__/login.test.tsx fails about 1 in 5 runs but it's a UUID mismatch and i don't have time to refactor LoginForm to accept idGen as a prop. just do the right thing here",
+    "should_trigger": true
+  },
+  {
+    "query": "ok so when i `git checkout main && git pull` my local server crashes because the .env file is stale — looks like a teammate added 3 new required env vars. unblock me but tell me what's missing",
+    "should_trigger": true
+  },
+  {
+    "query": "i keep hitting `EACCES: permission denied` on the `dist/` folder when i run `pnpm build` after switching branches. third time this week. find the actual cause not a chmod -R workaround",
+    "should_trigger": true
+  },
+  {
+    "query": "write a function that takes a hex color and returns the luminance contrast ratio against pure white. it's for a Tailwind theme generator i'm building",
+    "should_trigger": false
+  },
+  {
+    "query": "can you explain how React 19's useFormState differs from useFormStatus? i want to understand which one to use for the optimistic UI in our checkout form",
+    "should_trigger": false
+  },
+  {
+    "query": "review this PR — it's adding a new useCart hook to the cart context. mostly checking for state management correctness and accessibility on the cart drawer",
+    "should_trigger": false
+  },
+  {
+    "query": "i need to write a migration that adds a `deleted_at` column to the `subscriptions` table with a btree index, and a backfill query for the existing rows. postgres 14",
+    "should_trigger": false
+  },
+  {
+    "query": "actually that's wrong — we don't use moment.js in this project, we use date-fns. can you redo the timezone conversion using format and zonedTimeToUtc instead?",
+    "should_trigger": false
+  },
+  {
+    "query": "what's a good rate-limit strategy for our public api? we're getting hammered by one customer's automation that's doing ~30 requests/sec. thinking token bucket vs leaky bucket",
+    "should_trigger": false
+  },
+  {
+    "query": "set up a github actions workflow that runs vitest on every PR and posts the coverage diff as a comment. coverage threshold should be 80% on changed lines only",
+    "should_trigger": false
+  },
+  {
+    "query": "the e2e test in playwright takes 14 minutes — can you profile where the time is going and suggest where to parallelize? not asking you to fix it yet, just diagnose",
+    "should_trigger": false
+  },
+  {
+    "query": "write a comprehensive set of unit tests for the formatCurrency function in src/utils/money.ts. should cover negative numbers, big numbers, different locales, and edge cases like Infinity and NaN",
+    "should_trigger": false
+  },
+  {
+    "query": "i'm thinking of adopting bun for our scripts/ directory but keeping node for the main app. is that a sane setup or does it cause more pain than it saves? want your honest take before i propose it to the team",
+    "should_trigger": false
+  }
+]

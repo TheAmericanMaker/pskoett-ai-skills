@@ -138,7 +138,7 @@ Output a structured report:
 
 The gap report feeds into:
 
-1. **harness-updater agent** — takes promotion-ready patterns and applies them to project instruction files (CLAUDE.md, AGENTS.md, .github/copilot-instructions.md)
+1. **harness-updater agent** — takes promotion-ready patterns and applies them to project instruction files (CLAUDE.md, AGENTS.md, .github/copilot-instructions.md). harness-updater ships only in the plugin bundle (`plugin/agents/harness-updater.md`); without it, apply the gap report's recommended actions to the instruction files manually, human-gated, following the promotion format in `self-improvement`.
 2. **eval-creator skill** — takes eval candidates and creates permanent test cases
 3. **Human review** — for patterns classified as "reasoning failure" or "ambiguity" (these need human judgment)
 

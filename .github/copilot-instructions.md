@@ -59,10 +59,10 @@ For multi-step tasks, state a brief plan as `[Step] -> verify: [check]`. Strong 
 
 Every mistake is a learning opportunity. Log it, learn from it, prevent it.
 
-- After ANY correction from the user, log the lesson.
-- Write rules for yourself that prevent the same mistake.
-- Log to `.learnings/ERRORS.md`, `LEARNINGS.md`, or `FEATURE_REQUESTS.md`.
-- Promote broadly applicable learnings to `CLAUDE.md` and `AGENTS.md`.
+- After ANY correction from the user, log the lesson and write a rule for yourself that prevents the same mistake.
+- Log to `.learnings/ERRORS.md`, `LEARNINGS.md`, or `FEATURE_REQUESTS.md`. For active runtime failures with verified fixes, use the Self-Healing Workflow below (files to `HEALS.md`) instead.
+- Review and promote broadly applicable learnings — including heal handoffs at `Recurrence-Count >= 3` — to `CLAUDE.md` (project facts and conventions), `AGENTS.md` (workflows and automation), and `.github/copilot-instructions.md` (Copilot context).
+- For CI-only/headless learning capture, use `skills/self-improvement-ci/SKILL.md` (gh-aw).
 
 ## Project Overview
 
@@ -102,18 +102,7 @@ When a command, test, build, or external call fails mid-task — or when the age
 5. File a `HEAL-YYYYMMDD-XXX` entry to `.learnings/HEALS.md` with `Status: verified` (or `pending-verify` / `abandoned` if honest verify isn't possible).
 6. At `Recurrence-Count >= 3` across distinct tasks, append a `Handoff` block for promotion via self-improvement.
 
-Self-healing files the verified patch; self-improvement promotes it. Do not overlap.
-
-## Self-Improvement Workflow
-
-When errors or corrections occur:
-1. Log to `.learnings/ERRORS.md`, `LEARNINGS.md`, or `FEATURE_REQUESTS.md`.
-2. For active runtime failures with verified fixes, use `skills/self-healing/SKILL.md` (files to `HEALS.md`) instead.
-3. Review and promote broadly applicable learnings — including heal handoffs at `Recurrence-Count >= 3` — to:
-   - `CLAUDE.md` - project facts and conventions
-   - `AGENTS.md` - workflows and automation
-   - `.github/copilot-instructions.md` - Copilot context
-4. For CI-only/headless learning capture, use `skills/self-improvement-ci/SKILL.md` (gh-aw).
+Self-healing files the verified patch; self-improvement promotes it (see Core Principle 5). Do not overlap.
 
 ## Simplify and Harden Workflow
 

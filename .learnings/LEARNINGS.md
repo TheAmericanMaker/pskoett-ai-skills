@@ -78,3 +78,25 @@ This is a small, concrete improvement — not worth promoting to CLAUDE.md. Alre
 
 ---
 
+## [LRN-20260612-001] Unverified host-platform API claims shipped in multiple skills
+
+- **Category**: correction | **Area**: docs | **Status**: resolved
+- **Priority**: high
+- **Pattern-Key**: `docs.unverified-platform-api`
+- **First-Seen**: 2026-06-12 | **Last-Seen**: 2026-06-12 | **Recurrence-Count**: 6
+
+### Summary
+A repo-wide review found six independent cases of confidently documented agent-platform APIs that did not exist or did not work as described. All were fixed after verifying against current vendor docs.
+
+### Details
+The instances: (1) `error-detector.sh` read a `CLAUDE_TOOL_OUTPUT` env var that Claude Code hooks never set — hooks receive JSON on stdin; (2) plain stdout from a PostToolUse hook was assumed to reach the model — it requires `hookSpecificOutput.additionalContext` JSON (same bug in self-healing's `detect-failure.sh`); (3) a `.codex/settings.json` hook system was described that never existed — Codex CLI hooks live in `.codex/hooks.json` behind a `codex_hooks` feature flag; (4) a regex `matcher` on UserPromptSubmit was suggested — that event supports no matchers on any agent; (5) a JSON-with-comments "disable" example would break settings parsing; (6) "Copilot doesn't support hooks" was stale — Copilot hooks exist (`.github/hooks/*.json`) but their output is ignored for prompt/tool events, so the conclusion (use copilot-instructions.md) survived while the claim was wrong.
+
+### Suggested Action
+Any claim about a host platform's API (hook events, payload fields, config file locations, output channels) must be verified against current vendor documentation or a live test before it ships in a SKILL.md, reference, or script. Platforms change fast: two of the six were true statements that went stale.
+
+### Metadata
+- Source: repo analysis session 2026-06-12 (full report shared separately)
+- Related Files: skills/self-improvement/scripts/error-detector.sh, skills/self-improvement/references/hooks-setup.md, skills/self-healing/scripts/detect-failure.sh, skills/self-healing/references/hooks.md
+
+---
+

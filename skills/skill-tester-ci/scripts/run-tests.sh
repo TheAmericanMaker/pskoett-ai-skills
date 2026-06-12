@@ -7,9 +7,10 @@ set -e
 REPO_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 SKILLS_DIR="$REPO_ROOT/skills"
 VALIDATE="$REPO_ROOT/.claude/skills/skill-creator/scripts/quick_validate.py"
-TMPDIR=$(mktemp -d)
+# Do not name this TMPDIR — that shadows the system temp-dir env variable.
+WORK_DIR=$(mktemp -d)
 
-trap "rm -rf $TMPDIR" EXIT
+trap "rm -rf $WORK_DIR" EXIT
 
 pass=0; fail=0; compile_pass=0; compile_fail=0
 failures=""
@@ -59,8 +60,8 @@ if ! command -v gh >/dev/null 2>&1 || ! gh aw --version >/dev/null 2>&1; then
   echo "  SKIP (gh-aw not installed)"
 else
   # Setup temp git repo
-  mkdir -p "$TMPDIR/.github/workflows"
-  cd "$TMPDIR" && git init -q && echo "init" > .gitkeep && git add -A && git commit -q -m "init"
+  mkdir -p "$WORK_DIR/.github/workflows"
+  cd "$WORK_DIR" && git init -q && echo "init" > .gitkeep && git add -A && git commit -q -m "init"
 
   # Extract workflow blocks
   for skill in $ci_skills; do
@@ -78,13 +79,13 @@ for i, block in enumerate(blocks):
     if '---' in block[:10]:
         suffix = f'-{i}' if i > 0 else ''
         fname = '$skill' + suffix + '.md'
-        with open('$TMPDIR/.github/workflows/' + fname, 'w') as f:
+        with open('$WORK_DIR/.github/workflows/' + fname, 'w') as f:
             f.write(block)
         print(f'  Extracted {fname}', file=sys.stderr)
 " 2>&1
   done
 
-  cd "$TMPDIR" && git add -A && git commit -q -m "workflows"
+  cd "$WORK_DIR" && git add -A && git commit -q -m "workflows"
 
   # Compile
   compile_out=$(gh aw compile 2>&1)

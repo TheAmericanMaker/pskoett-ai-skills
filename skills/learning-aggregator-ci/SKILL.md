@@ -68,8 +68,8 @@ Hard rules for headless execution:
 
 The CI agent follows these rules in order:
 
-1. Read all files in `.learnings/`: `LEARNINGS.md`, `ERRORS.md`, `FEATURE_REQUESTS.md`
-2. Parse each entry's metadata: `Pattern-Key`, `Recurrence-Count`, `First-Seen`, `Last-Seen`, `Priority`, `Status`, `Area`, `Related Files`, `Tags`
+1. Read all files in `.learnings/`: `LEARNINGS.md`, `ERRORS.md`, `FEATURE_REQUESTS.md`, `HEALS.md`
+2. Parse each entry's metadata: `Pattern-Key`, `Recurrence-Count`, `First-Seen`, `Last-Seen`, `Priority`, `Status`, `Area`, `Related Files`, `Tags`. For HEAL entries, also parse `Trigger`, `Active-Context`, and any `Handoff` block — Handoff blocks at the promotion threshold are promotion-ready by definition and must appear in the gap report
 3. Group entries by `Pattern-Key` (exact match only — no fuzzy grouping in CI)
 4. For each group: sum recurrences, count distinct tasks, compute time window, collect evidence
 5. Flag entries without `Pattern-Key` as ungrouped
@@ -78,6 +78,8 @@ The CI agent follows these rules in order:
 8. Emit structured YAML under key `learning_aggregator_ci`
 9. Post gap report as a comment on the triggering issue or as a new issue if running on schedule
 10. Do not modify repository files
+
+**Promotion threshold** (same rule as `learning-aggregator` and `self-improvement`): a group is promotion-ready when `Recurrence-Count >= 3`, seen in `>= 2` distinct tasks, within a 30-day window.
 
 ## Output Schema
 
@@ -157,7 +159,9 @@ The schedule ensures regular outer-loop cadence. Manual dispatch allows on-deman
 ## Integration with Other Skills
 
 ### Upstream (feeds from)
-- `self-improvement` and `self-improvement-ci` — produce `.learnings/` entries
+- `self-improvement` (interactive) — produces `.learnings/LEARNINGS.md`, `ERRORS.md`, `FEATURE_REQUESTS.md` entries
+- `self-healing` / `self-healing-ci` — produce `.learnings/HEALS.md` entries including `Handoff` blocks
+- `self-improvement-ci` — emits learning candidates as machine-readable output (artifacts/comments); it is read-only and does not write `.learnings/` files itself
 - `simplify-and-harden-ci` — produces `learning_loop.candidates` consumed by self-improvement-ci
 
 ### Downstream (feeds into)
@@ -168,7 +172,7 @@ The schedule ensures regular outer-loop cadence. Manual dispatch allows on-deman
 ### Data Flow
 
 ```
-self-improvement → .learnings/*.md
+self-improvement → .learnings/*.md   ←  self-healing(-ci) → HEALS.md
                        ↓
               learning-aggregator-ci (scheduled)
                        ↓

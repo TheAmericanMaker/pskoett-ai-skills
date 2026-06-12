@@ -26,6 +26,10 @@ A two-phase team loop that produces production-quality code: **implement**, then
 - Fixing a list of issues or gaps identified in a review
 - Any task touching 5+ files where quality gates matter
 
+## Environment Requirements
+
+The procedure below uses multi-agent team tools (`TeamCreate`, `TaskCreate`, `TaskUpdate`, `SendMessage`, `TeamDelete`) plus subagent spawning (`general-purpose` and `Explore` agent types). These exist in Claude Code-style environments with agent teams enabled. If your environment lacks team tools but can spawn subagents, skip the team/task tooling and orchestrate the same phases directly: spawn implementation subagents, then audit subagents, tracking tasks in a markdown checklist. If your environment cannot spawn subagents at all (e.g. GitHub Copilot chat), do not use this skill — run the sequential `simplify-and-harden` skill instead, and ask in chat for each phase's findings.
+
 ## Pipeline Integration
 
 This skill replaces stages 2–4 of the standard pipeline (execution, review, learning) with a team-based loop. It can follow `plan-interview` or run standalone — every upstream artifact is optional.

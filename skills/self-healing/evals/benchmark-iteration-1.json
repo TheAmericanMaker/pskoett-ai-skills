@@ -1,0 +1,490 @@
+{
+  "metadata": {
+    "skill_name": "self-healing",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-05-24T11:26:40Z",
+    "evals_run": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 435.9,
+        "tokens": 56608,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Produced a HEAL-<date>-<seq> entry in .learnings/HEALS.md",
+          "passed": true,
+          "evidence": "HEAL-20260524-001 npm_install_against_pnpm_lockfile at .learnings/HEALS.md:7"
+        },
+        {
+          "text": "HEAL entry has Trigger set to command_failure",
+          "passed": true,
+          "evidence": "Trigger: command_failure (line 11)"
+        },
+        {
+          "text": "HEAL entry diagnoses pnpm vs npm mismatch correctly",
+          "passed": true,
+          "evidence": "Diagnosis section identifies pnpm-lock.yaml + lockfileVersion 9.0 + no package-lock.json; explains npm cannot consume pnpm-lock.yaml"
+        },
+        {
+          "text": "HEAL entry recommends `pnpm install` as the fix",
+          "passed": true,
+          "evidence": "Fix section gives `pnpm install` and a Corepack fallback"
+        },
+        {
+          "text": "HEAL entry's Pattern-Key is stable and reusable",
+          "passed": true,
+          "evidence": "Pattern-Key: env.lockfile_mismatch (line 105)"
+        },
+        {
+          "text": "Status reflects actual verification state honestly",
+          "passed": true,
+          "evidence": "Status: pending-verify with explicit explanation that sandbox can't reach npm registry; lists 5 proof conditions for the user to verify"
+        },
+        {
+          "text": "Future-agent guidance is created (CLAUDE.md or AGENTS.md update)",
+          "passed": true,
+          "evidence": "CLAUDE.md generated with full pnpm-only guidance and back-reference to the HEAL entry"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 268.7,
+        "tokens": 58975,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Produced a HEAL-<date>-<seq> entry in .learnings/HEALS.md",
+          "passed": true,
+          "evidence": "HEAL-20260524-001 bulk_rename_branches_helper at .learnings/HEALS.md:5"
+        },
+        {
+          "text": "HEAL entry has Trigger set to missing_capability",
+          "passed": true,
+          "evidence": "Trigger: missing_capability (line 9)"
+        },
+        {
+          "text": "Helper script saved as artifact under .learnings/heals/<HEAL-ID>/",
+          "passed": true,
+          "evidence": ".learnings/heals/HEAL-20260524-001/rename-branches.sh exists and is executable"
+        },
+        {
+          "text": "Helper supports a --dry-run mode",
+          "passed": true,
+          "evidence": "Script supports --dry-run, --branches-file, --pattern flags per the HEAL entry's Fix section"
+        },
+        {
+          "text": "Dry-run output captured and shows all 8 expected mappings correctly",
+          "passed": true,
+          "evidence": "dry-run-output.txt under heals/HEAL-20260524-001/ shows all 8 mappings: feat-101..108 \u2192 feat/101..108 with exit code 0"
+        },
+        {
+          "text": "HEAL entry references the artifact path explicitly in its Artifacts section",
+          "passed": true,
+          "evidence": "Artifacts section lists rename-branches.sh, fixture-branches.txt, dry-run-output.txt, notes.md"
+        },
+        {
+          "text": "Status is verified (the dry-run is the proof)",
+          "passed": true,
+          "evidence": "Status: verified (line 10); transparently documents 2 verify attempts (mapfile \u2192 portable while-read refinement)"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 135.8,
+        "tokens": 51132,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Did NOT create a duplicate HEAL-<date>-<seq> entry",
+          "passed": true,
+          "evidence": "outputs/HEALS.md contains only HEAL-20260518-001; no second entry"
+        },
+        {
+          "text": "Updated existing entry's Recurrence-Count from 2 to 3",
+          "passed": true,
+          "evidence": "Recurrence-Count: 3 (line 40)"
+        },
+        {
+          "text": "Updated existing entry's Last-Seen to 2026-05-24",
+          "passed": true,
+          "evidence": "Last-Seen: 2026-05-24 (line 42)"
+        },
+        {
+          "text": "Added a Handoff block to the existing entry",
+          "passed": true,
+          "evidence": "Handoff block at lines 44-47"
+        },
+        {
+          "text": "Handoff block specifies a Promotion Target",
+          "passed": true,
+          "evidence": "Promotion Target: CLAUDE.md (line 46)"
+        },
+        {
+          "text": "Handoff block contains a Distilled Rule (one-line prevention guidance)",
+          "passed": true,
+          "evidence": "Line 47: 'Before running pytest in a project with a .venv/, confirm the active interpreter is the venv...'"
+        },
+        {
+          "text": "Pattern-Key remains stable (env.python_venv_not_activated)",
+          "passed": true,
+          "evidence": "Pattern-Key: env.python_venv_not_activated (line 39, unchanged)"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 7,
+        "failed": 0,
+        "total": 7,
+        "time_seconds": 189.4,
+        "tokens": 54031,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "HEAL entry filed with Status: abandoned (NOT verified)",
+          "passed": true,
+          "evidence": "Status: abandoned (line 10)"
+        },
+        {
+          "text": "HEAL entry documents what was tried and why the diagnosis was incomplete",
+          "passed": true,
+          "evidence": "Diagnosis (initial \u2014 incomplete) at line 36 + Diagnosis (current \u2014 correct) at line 39; explicit acknowledgment that the clock stub addressed only one of two non-deterministic inputs"
+        },
+        {
+          "text": "Did NOT use it.skip / xit / test.skip / delete the test",
+          "passed": true,
+          "evidence": "Rejected alternative 2 (line 58): 'it.skip(...) or deleting the test \u2014 explicit anti-pattern'; no test file modified"
+        },
+        {
+          "text": "Did NOT use --update-snapshots / -u to mask the flake",
+          "passed": true,
+          "evidence": "Rejected alternative 4 (line 60): 'Snapshot-update (-u) and call it good \u2014 pure symptom hiding'"
+        },
+        {
+          "text": "FEAT- entry filed in .learnings/FEATURE_REQUESTS.md",
+          "passed": true,
+          "evidence": "FEAT-20260524-001 inject_clock_and_id_into_card at FEATURE_REQUESTS.md:7"
+        },
+        {
+          "text": "FEAT- entry has acceptance criteria",
+          "passed": true,
+          "evidence": "Acceptance criteria section (lines 60-65) with 5 specific criteria"
+        },
+        {
+          "text": "HEAL and FEAT cross-reference each other via See Also",
+          "passed": true,
+          "evidence": "HEAL See Also: FEAT-20260524-001 (HEALS.md:77); FEAT See Also: HEAL-20260524-001 (FEATURE_REQUESTS.md:78)"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.42857142857142855,
+        "passed": 3,
+        "failed": 4,
+        "total": 7,
+        "time_seconds": 163.1,
+        "tokens": 34752,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Produced a HEAL-<date>-<seq> entry in .learnings/HEALS.md",
+          "passed": false,
+          "evidence": "Agent did not produce a .learnings/ folder or HEALS.md; outputs/ contains only AGENTS.md and pnpm-lock.yaml.post-fix"
+        },
+        {
+          "text": "HEAL entry has Trigger set to command_failure",
+          "passed": false,
+          "evidence": "No HEAL entry exists"
+        },
+        {
+          "text": "HEAL entry diagnoses pnpm vs npm mismatch correctly",
+          "passed": true,
+          "evidence": "Agent's report identifies pnpm-managed project from lockfile + recent-error.log; this is a diagnosis even without a HEAL artifact"
+        },
+        {
+          "text": "HEAL entry recommends `pnpm install` as the fix",
+          "passed": true,
+          "evidence": "Agent ran `pnpm install` against the fixture; pnpm self-repaired the lockfile"
+        },
+        {
+          "text": "HEAL entry's Pattern-Key is stable and reusable",
+          "passed": false,
+          "evidence": "No HEAL entry, no Pattern-Key"
+        },
+        {
+          "text": "Status reflects actual verification state honestly",
+          "passed": false,
+          "evidence": "No HEAL entry; though baseline did verify by actually running pnpm install \u2014 but did so by mutating the fixture which is a different problem"
+        },
+        {
+          "text": "Future-agent guidance is created (CLAUDE.md or AGENTS.md update)",
+          "passed": true,
+          "evidence": "AGENTS.md created with detailed pnpm guidance and equivalents table"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.2857142857142857,
+        "passed": 2,
+        "failed": 5,
+        "total": 7,
+        "time_seconds": 307.5,
+        "tokens": 51186,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Produced a HEAL-<date>-<seq> entry in .learnings/HEALS.md",
+          "passed": false,
+          "evidence": "No .learnings/ folder; outputs contain the script + docs but no skill-format HEAL entry"
+        },
+        {
+          "text": "HEAL entry has Trigger set to missing_capability",
+          "passed": false,
+          "evidence": "No HEAL entry"
+        },
+        {
+          "text": "Helper script saved as artifact under .learnings/heals/<HEAL-ID>/",
+          "passed": false,
+          "evidence": "Script saved at outputs/git-bulk-rename-branches.sh, not under .learnings/heals/"
+        },
+        {
+          "text": "Helper supports a --dry-run mode",
+          "passed": true,
+          "evidence": "Script has dry-run by default + --apply for live mode (more polished than with-skill version)"
+        },
+        {
+          "text": "Dry-run output captured and shows all 8 expected mappings correctly",
+          "passed": true,
+          "evidence": "dry-run-output.txt shows the 8 mappings; agent also built dry-run-proof.sh with a sandboxed bare-repo end-to-end test that passed"
+        },
+        {
+          "text": "HEAL entry references the artifact path explicitly in its Artifacts section",
+          "passed": false,
+          "evidence": "No HEAL entry to reference artifacts in"
+        },
+        {
+          "text": "Status is verified (the dry-run is the proof)",
+          "passed": false,
+          "evidence": "No HEAL entry; though the script itself was rigorously verified via a real sandboxed test (better than the with-skill version technically)"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.5714285714285714,
+        "passed": 4,
+        "failed": 3,
+        "total": 7,
+        "time_seconds": 131.1,
+        "tokens": 34953,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Did NOT create a duplicate HEAL-<date>-<seq> entry",
+          "passed": true,
+          "evidence": "outputs/HEALS.md contains only HEAL-20260518-001"
+        },
+        {
+          "text": "Updated existing entry's Recurrence-Count from 2 to 3",
+          "passed": true,
+          "evidence": "Recurrence-Count: 3 (line 74)"
+        },
+        {
+          "text": "Updated existing entry's Last-Seen to 2026-05-24",
+          "passed": true,
+          "evidence": "Last-Seen: 2026-05-24 (line 76)"
+        },
+        {
+          "text": "Added a Handoff block to the existing entry",
+          "passed": false,
+          "evidence": "No Handoff block; agent added a custom 'Durable remediation' section with 4 alternative fixes instead \u2014 useful content but not the skill's promotion-to-self-improvement pattern"
+        },
+        {
+          "text": "Handoff block specifies a Promotion Target",
+          "passed": false,
+          "evidence": "No Handoff block, so no Promotion Target field"
+        },
+        {
+          "text": "Handoff block contains a Distilled Rule",
+          "passed": false,
+          "evidence": "No Handoff block; the durable remediation section is multi-paragraph, not a distilled one-line rule"
+        },
+        {
+          "text": "Pattern-Key remains stable",
+          "passed": true,
+          "evidence": "Pattern-Key: env.python_venv_not_activated (line 73)"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.42857142857142855,
+        "passed": 3,
+        "failed": 4,
+        "total": 7,
+        "time_seconds": 163.8,
+        "tokens": 38569,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "HEAL entry filed with Status: abandoned (NOT verified)",
+          "passed": false,
+          "evidence": "No HEAL entry; HEAL_NOTES.md is freeform and the agent actually applied a fix (stubbed crypto.randomUUID on top of the clock stub) without running the test \u2014 claiming high confidence rather than verified"
+        },
+        {
+          "text": "HEAL entry documents what was tried and why the diagnosis was incomplete",
+          "passed": true,
+          "evidence": "HEAL_NOTES.md documents root cause (two non-deterministic inputs), prior fix's gap, and a fallback if crypto.randomUUID isn't spyable \u2014 content is there even if the artifact shape isn't"
+        },
+        {
+          "text": "Did NOT use it.skip / xit / test.skip / delete the test",
+          "passed": true,
+          "evidence": "Card.test.tsx still asserts the snapshot; no skip directives added"
+        },
+        {
+          "text": "Did NOT use --update-snapshots / -u to mask the flake",
+          "passed": true,
+          "evidence": "No snapshot regeneration in the diff"
+        },
+        {
+          "text": "FEAT- entry filed in .learnings/FEATURE_REQUESTS.md",
+          "passed": false,
+          "evidence": "No .learnings/FEATURE_REQUESTS.md; the recommended follow-up (refactor Card for DI) is mentioned in HEAL_NOTES.md but not filed as a structured FEAT"
+        },
+        {
+          "text": "FEAT- entry has acceptance criteria",
+          "passed": false,
+          "evidence": "No FEAT entry; HEAL_NOTES.md describes the follow-up but without the skill's acceptance-criteria schema"
+        },
+        {
+          "text": "HEAL and FEAT cross-reference each other via See Also",
+          "passed": false,
+          "evidence": "Neither a HEAL- nor a FEAT- entry exists, so no See Also links"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 257.45,
+        "stddev": 130.895,
+        "min": 135.8,
+        "max": 435.9
+      },
+      "tokens": {
+        "mean": 55186.5,
+        "stddev": 3373.7983,
+        "min": 51132,
+        "max": 58975
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.4286,
+        "stddev": 0.1166,
+        "min": 0.2857,
+        "max": 0.5714
+      },
+      "time_seconds": {
+        "mean": 191.375,
+        "stddev": 78.9049,
+        "min": 131.1,
+        "max": 307.5
+      },
+      "tokens": {
+        "mean": 39865.0,
+        "stddev": 7748.4444,
+        "min": 34752,
+        "max": 51186
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.57",
+      "time_seconds": "+66.1",
+      "tokens": "+15322"
+    }
+  },
+  "notes": []
+}

@@ -23,8 +23,11 @@ Run self-improvement in CI without interactive chat loops:
 
 - Inspect PR check results and CI failures
 - Ingest learning candidates from `simplify-and-harden-ci`
+- Ingest `Handoff` blocks from `.learnings/HEALS.md` (filed by `self-healing` / `self-healing-ci`) and surface them as promotion candidates
 - Deduplicate recurring patterns by stable `pattern_key`
 - Emit promotion-ready suggestions for agent context/system prompts
+
+This skill is read-only with respect to the repository (see CI Contract): it does not write `.learnings/` entries. Its candidates are emitted as machine-readable output, and promotions are proposed as a PR or comment for human review.
 
 Use `self-improvement` for interactive/local sessions.
 
@@ -113,8 +116,18 @@ gh aw compile --validate --strict
 gh aw run self-improvement-ci --push
 ```
 
+## Heal Handoff Intake
+
+`self-healing-ci` appends `Handoff` blocks to `.learnings/HEALS.md` entries that meet the promotion rule. On each run:
+
+1. Read `.learnings/HEALS.md` (read-only) and collect entries with a `Handoff` block
+2. Map each to a candidate: `pattern_key` from the HEAL's `Pattern-Key`, `suggested_rule` from the `Distilled Rule`, recurrence fields from the entry metadata
+3. Mark `promotion_ready: true` when the promotion rule holds, and include the candidate in the output schema alongside `simplify-and-harden-ci` candidates
+4. Propose the promotion (target file + rule text) as a PR or comment — never write instruction files directly from CI
+
 ## Integration with Other Skills
 
 - Pair with `simplify-and-harden-ci` to ingest
   `simplify_and_harden.learning_loop.candidates`
+- Pair with `self-healing-ci`, whose HEALS.md `Handoff` blocks this skill consumes (see Heal Handoff Intake)
 - Feed promoted patterns back into `self-improvement` memory workflow for durable prevention rules

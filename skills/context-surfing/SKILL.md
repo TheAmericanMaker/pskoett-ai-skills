@@ -46,7 +46,7 @@ The skill's job: ride as long as the wave is good, exit before it closes out.
 ## Lifecycle Position
 
 ```
-[plan-interview] → [intent-framed-agent] → [context-surfing ACTIVE] → [simplify-and-harden] → [self-improvement]
+[plan-interview] → [intent-framed-agent] → [context-surfing ACTIVE] → [verify-gate] → [simplify-and-harden] → [self-improvement]
 ```
 
 Context Surfing is the execution layer. It wraps all work between intent capture and post-completion review. Simplify-and-harden and self-improvement are the next steps in the pipeline — they run after context-surfing completes, not as conditions that end it.
@@ -66,15 +66,17 @@ They are complementary, not redundant. An agent can be perfectly on-scope while 
 
 ### When to Use the Full Pipeline
 
-Not every task needs all five skills. Match pipeline depth to task complexity:
+Not every task needs every skill in the pipeline. Match pipeline depth to task complexity:
 
 | Task Type | Skills to Use |
 |-----------|---------------|
 | Trivial (rename, typo fix) | None — just do it |
-| Small (isolated bug fix, single-file change) | `simplify-and-harden` only |
-| Medium (feature in known area, multi-file) | `intent-framed-agent` + `simplify-and-harden` |
+| Small (isolated bug fix, single-file change) | `verify-gate` + `simplify-and-harden` |
+| Medium (feature in known area, multi-file) | `intent-framed-agent` + `verify-gate` + `simplify-and-harden` |
 | Large (complex refactor, new architecture, unfamiliar codebase) | Full pipeline |
 | Long-running (multi-session, high context pressure) | Full pipeline with `context-surfing` as the critical skill |
+
+This table matches `skill-pipeline`'s task classification, which is the canonical routing source.
 
 When in doubt, start light. Add skills if you notice drift or quality issues mid-task.
 
@@ -208,7 +210,7 @@ Compare what you're currently doing against what these artifacts say you should 
 #### Step 2: Reconcile
 
 - **If the mismatch resolves** — you can trace a clear line from the anchor to your current work — resume execution. The weak signals were noise, not drift.
-- **If uncertainty remains** — spawn the `context-monitor` subagent as a cold-context second opinion *before* escalating to the user. Brief it with the intent frame (or plan, or original task description), your current next-action, and the specific weak signals you observed. A fresh-context subagent is the one reliable escape from the monitoring paradox: your own re-read happens inside the same possibly-degraded context, while `context-monitor` reads the artifacts cold.
+- **If uncertainty remains** — spawn the `context-monitor` subagent as a cold-context second opinion *before* escalating to the user. (`context-monitor` is defined in the plugin bundle at `plugin/agents/context-monitor.md`; if it isn't available in your environment, spawn a general-purpose read-only subagent with the same brief instead.) Brief it with the intent frame (or plan, or original task description), your current next-action, and the specific weak signals you observed. A fresh-context subagent is the one reliable escape from the monitoring paradox: your own re-read happens inside the same possibly-degraded context, while `context-monitor` reads the artifacts cold.
 - **If `context-monitor` returns "healthy" or "weak signals only"** — integrate its corrections and resume execution.
 - **If `context-monitor` returns "strong drift detected", or you still can't reconcile after its report** — escalate to the user. Present the situation openly: *"I'm noticing some drift. Here's where I am vs where the plan says I should be — here's what `context-monitor` found — how should I proceed?"*
 - **If the user re-grounds you** — integrate their clarification and resume. The re-anchor succeeded.
@@ -343,8 +345,9 @@ No handoff file needed for clean completions — just the outputs and a one-line
 1. `plan-interview` (optional, for requirement shaping)
 2. `intent-framed-agent` (execution contract + scope drift monitoring)
 3. `context-surfing` (context quality monitoring — runs concurrently with intent-framed-agent during execution)
-4. `simplify-and-harden` (post-completion quality/security pass)
-5. `self-improvement` (capture recurring patterns and promote durable rules)
+4. `verify-gate` (machine verification: compile + test + lint)
+5. `simplify-and-harden` (post-completion quality/security pass)
+6. `self-improvement` (capture recurring patterns and promote durable rules)
 
 ---
 
@@ -352,23 +355,24 @@ No handoff file needed for clean completions — just the outputs and a one-line
 
 Enable automatic handoff detection at session start. This ensures handoff files from previous context exits are never silently ignored.
 
-### Setup (Claude Code / Codex)
+### Setup (Claude Code)
 
-Add to `.claude/settings.json`:
+Add to `.claude/settings.json`. Point the command at where the skill is installed (`.claude/skills/context-surfing/` for `gh skill install` / `npx skills add`, `skills/context-surfing/` if this repo is vendored; the plugin bundle registers this hook automatically with a `${CLAUDE_PLUGIN_ROOT}` path):
 
 ```json
 {
   "hooks": {
     "SessionStart": [{
-      "matcher": "",
       "hooks": [{
         "type": "command",
-        "command": "./skills/context-surfing/scripts/handoff-checker.sh"
+        "command": "${CLAUDE_PROJECT_DIR}/.claude/skills/context-surfing/scripts/handoff-checker.sh"
       }]
     }]
   }
 }
 ```
+
+Codex CLI supports the same `SessionStart` event via `<repo>/.codex/hooks.json` (experimental, behind `codex_hooks = true` in `config.toml`); plain stdout from the script is added as developer context there too.
 
 This checks for unread handoff files in `.context-surfing/` on every prompt. If found, it reminds the agent to read the handoff before starting new work (~100 tokens overhead, skips silently when no handoff exists).
 

@@ -1,24 +1,49 @@
 ---
 name: self-improvement
-description: "Captures learnings, errors, corrections, and feature requests to enable continuous improvement. Use when: (1) User corrects Codex ('No, that's wrong...', 'Actually...'), (2) User requests a capability that doesn't exist, (3) Codex realizes its knowledge is outdated or incorrect, (4) A better approach is discovered for a recurring task, (5) Receiving a Handoff block from self-healing (a recurring verified heal at Recurrence-Count >= 3) to distill into a memory file or new skill. For ACTIVE runtime failures where the agent needs to apply and verify a fix mid-task, use `self-healing` instead (it files HEAL- entries with proof; self-improvement promotes accumulated patterns). Also review learnings before major tasks."
+description: "Captures learnings, errors, corrections, and feature requests to enable continuous improvement. Use when: (1) User corrects Claude ('No, that's wrong...', 'Actually...'), (2) User requests a capability that doesn't exist, (3) Claude realizes its knowledge is outdated or incorrect, (4) A better approach is discovered for a recurring task, (5) Receiving a Handoff block from self-healing (a recurring verified heal at Recurrence-Count >= 3) to distill into a memory file or new skill. For ACTIVE runtime failures where the agent needs to apply and verify a fix mid-task, use `self-healing` instead (it files HEAL- entries with proof; self-improvement promotes accumulated patterns). Also review learnings before major tasks. For CI-only/headless learning capture, use self-improvement-ci."
 ---
 
 # Self-Improvement Skill
 
+## Install
+
+```bash
+gh skill install pskoett/pskoett-skills self-improvement
+```
+
+For CI-only execution, use:
+
+```bash
+gh skill install pskoett/pskoett-skills self-improvement-ci
+```
+
+Fallback using the Agent Skills CLI:
+
+```bash
+npx skills add pskoett/pskoett-skills/skills/self-improvement
+npx skills add pskoett/pskoett-skills/skills/self-improvement-ci
+```
+
 Log learnings and errors to markdown files for continuous improvement. Coding agents can later process these into fixes, and important learnings get promoted to project memory.
+
+**Pair with [`self-healing`](../self-healing/SKILL.md):** self-healing is the active runtime recovery primitive — it diagnoses, patches, verifies, and files `HEAL-` entries to `.learnings/HEALS.md` when something breaks mid-task. Self-improvement (this skill) is the passive accumulation and promotion layer — it logs corrections, knowledge gaps, and feature requests, and promotes recurring heal handoffs to permanent memory. They share `.learnings/` but write to different files; verify discipline lives in self-healing, promotion logic lives here.
 
 ## Quick Reference
 
 | Situation | Action |
 |-----------|--------|
-| Command/operation fails | Log to `.learnings/ERRORS.md` |
+| Active failure mid-task — agent needs to fix it now | **Use `self-healing` instead** (files verified HEAL- to `.learnings/HEALS.md`) |
+| Command/operation failed in the past (not actively healing) | Log to `.learnings/ERRORS.md` |
 | User corrects you | Log to `.learnings/LEARNINGS.md` with category `correction` |
 | User wants missing feature | Log to `.learnings/FEATURE_REQUESTS.md` |
 | API/external tool fails | Log to `.learnings/ERRORS.md` with integration details |
+| Self-healing Handoff block meets promotion rule (see Promotion Rule below) | Promote the Distilled Rule to `CLAUDE.md` / `AGENTS.md` / new skill |
 | Knowledge was outdated | Log to `.learnings/LEARNINGS.md` with category `knowledge_gap` |
 | Found better approach | Log to `.learnings/LEARNINGS.md` with category `best_practice` |
+| Simplify/Harden recurring patterns | Log/update `.learnings/LEARNINGS.md` with `Source: simplify-and-harden` and a stable `Pattern-Key` |
 | Similar to existing entry | Link with `**See Also**`, consider priority bump |
-| Broadly applicable learning | Promote to `AGENTS.md`, `AGENTS.md`, and/or `.github/copilot-instructions.md` |
+| Broadly applicable learning | Promote to `CLAUDE.md`, `AGENTS.md`, and/or `.github/copilot-instructions.md` |
+| OpenClaw workspace targets (SOUL.md, TOOLS.md) | See `references/openclaw-integration.md` |
 
 ## Setup
 
@@ -28,7 +53,7 @@ Create `.learnings/` directory in project root if it doesn't exist:
 mkdir -p .learnings
 ```
 
-Copy templates from `assets/` or create files with headers.
+Copy the file templates from `assets/` (`LEARNINGS.md`, `ERRORS.md`, `FEATURE_REQUESTS.md`) or create files with headers.
 
 ## Logging Format
 
@@ -58,6 +83,10 @@ Specific fix or improvement to make
 - Related Files: path/to/file.ext
 - Tags: tag1, tag2
 - See Also: LRN-20250110-001 (if related to existing entry)
+- Pattern-Key: simplify.dead_code | harden.input_validation (optional, for recurring-pattern tracking)
+- Recurrence-Count: 1 (optional)
+- First-Seen: 2025-01-15 (optional)
+- Last-Seen: 2025-01-15 (optional)
 
 ---
 ```
@@ -155,7 +184,8 @@ When an issue is fixed, update the entry:
 Other status values:
 - `in_progress` - Actively being worked on
 - `wont_fix` - Decided not to address (add reason in Resolution notes)
-- `promoted` - Elevated to AGENTS.md, AGENTS.md, or .github/copilot-instructions.md
+- `promoted` - Elevated to CLAUDE.md, AGENTS.md, or .github/copilot-instructions.md
+- `promoted_to_skill` - Extracted as a reusable skill (see Automatic Skill Extraction)
 
 ## Promoting to Project Memory
 
@@ -172,9 +202,11 @@ When a learning is broadly applicable (not a one-off fix), promote it to permane
 
 | Target | What Belongs There |
 |--------|-------------------|
-| `AGENTS.md` | Project facts, conventions, gotchas for all Codex interactions |
+| `CLAUDE.md` | Project facts, conventions, gotchas for all Claude interactions |
 | `AGENTS.md` | Agent-specific workflows, tool usage patterns, automation rules |
 | `.github/copilot-instructions.md` | Project context and conventions for GitHub Copilot |
+
+OpenClaw workspace targets (`SOUL.md`, `TOOLS.md`) are covered in `references/openclaw-integration.md`.
 
 ### How to Promote
 
@@ -182,7 +214,7 @@ When a learning is broadly applicable (not a one-off fix), promote it to permane
 2. **Add** to appropriate section in target file (create file if needed)
 3. **Update** original entry:
    - Change `**Status**: pending` → `**Status**: promoted`
-   - Add `**Promoted**: AGENTS.md`, `AGENTS.md`, or `.github/copilot-instructions.md`
+   - Add `**Promoted**: CLAUDE.md`, `AGENTS.md`, or `.github/copilot-instructions.md`
 
 ### Promotion Examples
 
@@ -190,7 +222,7 @@ When a learning is broadly applicable (not a one-off fix), promote it to permane
 > Project uses pnpm workspaces. Attempted `npm install` but failed. 
 > Lock file is `pnpm-lock.yaml`. Must use `pnpm install`.
 
-**In AGENTS.md** (concise):
+**In CLAUDE.md** (concise):
 ```markdown
 ## Build & Dependencies
 - Package manager: pnpm (not npm) - use `pnpm install`
@@ -215,9 +247,48 @@ If logging something similar to an existing entry:
 2. **Link entries**: Add `**See Also**: ERR-20250110-001` in Metadata
 3. **Bump priority** if issue keeps recurring
 4. **Consider systemic fix**: Recurring issues often indicate:
-   - Missing documentation (→ promote to AGENTS.md or .github/copilot-instructions.md)
+   - Missing documentation (→ promote to CLAUDE.md or .github/copilot-instructions.md)
    - Missing automation (→ add to AGENTS.md)
    - Architectural problem (→ create tech debt ticket)
+
+## Simplify & Harden Feed
+
+Use this workflow to ingest recurring patterns from the `simplify-and-harden`
+skill and turn them into durable prompt guidance.
+
+### Ingestion Workflow
+
+1. Read `simplify_and_harden.learning_loop.candidates` from the task summary.
+2. For each candidate, use `pattern_key` as the stable dedupe key.
+3. Search `.learnings/LEARNINGS.md` for an existing entry with that key:
+   - `grep -n "Pattern-Key: <pattern_key>" .learnings/LEARNINGS.md`
+4. If found:
+   - Increment `Recurrence-Count`
+   - Update `Last-Seen`
+   - Add `See Also` links to related entries/tasks
+5. If not found:
+   - Create a new `LRN-...` entry
+   - Set `Source: simplify-and-harden`
+   - Set `Pattern-Key`, `Recurrence-Count: 1`, and `First-Seen`/`Last-Seen`
+
+### Promotion Rule (System Prompt Feedback)
+
+Promote recurring patterns into agent context/system prompt files when all are true:
+
+- `Recurrence-Count >= 3`
+- Seen across at least 2 distinct tasks
+- Occurred within a 30-day window
+
+Promotion targets:
+- `CLAUDE.md`
+- `AGENTS.md`
+- `.github/copilot-instructions.md`
+- OpenClaw workspace files when applicable — see `references/openclaw-integration.md`
+
+This three-condition rule is the single promotion threshold for this skill. The Quick Reference row for self-healing Handoff blocks and the aggregator skills (`learning-aggregator`, `learning-aggregator-ci`) all use this same rule.
+
+Write promoted rules as short prevention rules (what to do before/while coding),
+not long incident write-ups.
 
 ## Periodic Review
 
@@ -304,7 +375,7 @@ Use to filter learnings by codebase region:
 4. **Link related files** - makes fixes easier
 5. **Suggest concrete fixes** - not just "investigate"
 6. **Use consistent categories** - enables filtering
-7. **Promote aggressively** - if in doubt, add to AGENTS.md or .github/copilot-instructions.md
+7. **Promote aggressively** - if in doubt, add to CLAUDE.md or .github/copilot-instructions.md
 8. **Review regularly** - stale learnings lose value
 
 ## Gitignore Options
@@ -325,20 +396,19 @@ Don't add to .gitignore - learnings become shared knowledge.
 
 ## Hook Integration
 
-Enable automatic reminders through agent hooks. This is **opt-in** - you must explicitly configure hooks.
+Enable automatic reminders through agent hooks. This is **opt-in** - you must explicitly configure hooks. The same two scripts work across Claude Code and Codex CLI (both deliver JSON on stdin and accept the same `additionalContext` output shape); Copilot hooks can log but not inject context, so Copilot uses the instructions-file channel. Full per-agent setup including Codex and Copilot: `references/hooks-setup.md`.
 
-### Quick Setup (Codex / Codex)
+### Quick Setup (Claude Code)
 
-Create `.Codex/settings.json` in your project:
+Create `.claude/settings.json` in your project. The command path must point to where the skill is actually installed: `.claude/skills/self-improvement/` for `gh skill install` / `npx skills add`, or `skills/self-improvement/` if this repo is vendored into the project. Relative paths resolve from the project root.
 
 ```json
 {
   "hooks": {
     "UserPromptSubmit": [{
-      "matcher": "",
       "hooks": [{
         "type": "command",
-        "command": "./skills/self-improvement/scripts/activator.sh"
+        "command": "${CLAUDE_PROJECT_DIR}/.claude/skills/self-improvement/scripts/activator.sh"
       }]
     }]
   }
@@ -353,29 +423,30 @@ This injects a learning evaluation reminder after each prompt (~50-100 tokens ov
 {
   "hooks": {
     "UserPromptSubmit": [{
-      "matcher": "",
       "hooks": [{
         "type": "command",
-        "command": "./skills/self-improvement/scripts/activator.sh"
+        "command": "${CLAUDE_PROJECT_DIR}/.claude/skills/self-improvement/scripts/activator.sh"
       }]
     }],
     "PostToolUse": [{
       "matcher": "Bash",
       "hooks": [{
         "type": "command",
-        "command": "./skills/self-improvement/scripts/error-detector.sh"
+        "command": "${CLAUDE_PROJECT_DIR}/.claude/skills/self-improvement/scripts/error-detector.sh"
       }]
     }]
   }
 }
 ```
 
+Hooks receive the event payload as JSON on stdin. The error detector parses `tool_response` from that JSON and returns its reminder as `additionalContext` JSON output, which is required for PostToolUse output to reach the model.
+
 ### Available Hook Scripts
 
 | Script | Hook Type | Purpose |
 |--------|-----------|---------|
-| `scripts/activator.sh` | UserPromptSubmit | Reminds to evaluate learnings after tasks |
-| `scripts/error-detector.sh` | PostToolUse (Bash) | Triggers on command errors |
+| `scripts/activator.sh` | UserPromptSubmit (Claude Code, Codex) | Reminds to evaluate learnings after tasks (plain stdout is added to context for this event on both agents) |
+| `scripts/error-detector.sh` | PostToolUse (Claude Code, Codex), postToolUse (Copilot, logging only) | Parses the stdin JSON payload for error patterns across all three agents' payload shapes; emits an `additionalContext` reminder |
 
 See `references/hooks-setup.md` for detailed configuration and troubleshooting.
 
@@ -448,21 +519,22 @@ Before extraction, verify:
 
 This skill works across different AI coding agents with agent-specific activation.
 
-### Codex
+### Claude Code
 
 **Activation**: Hooks (UserPromptSubmit, PostToolUse)
-**Setup**: `.Codex/settings.json` with hook configuration
+**Setup**: `.claude/settings.json` with hook configuration
 **Detection**: Automatic via hook scripts
 
 ### Codex CLI
 
-**Activation**: Hooks (same pattern as Codex)
-**Setup**: `.codex/settings.json` with hook configuration
-**Detection**: Automatic via hook scripts
+**Activation**: Hooks (`UserPromptSubmit`, `PostToolUse`) — experimental, behind `codex_hooks = true` in `config.toml`
+**Setup**: `<repo>/.codex/hooks.json` or `~/.codex/hooks.json`; same scripts, same payload/output shapes as Claude Code
+**Detection**: Automatic via hook scripts; see `references/hooks-setup.md` for the config
+**Fallback**: Add the self-improvement guidance to `AGENTS.md` if hooks are unavailable
 
 ### GitHub Copilot
 
-**Activation**: Manual (no hook support)
+**Activation**: Instructions file (Copilot hooks exist in `.github/hooks/*.json` but their output is ignored for prompt/tool events — they can log, not inject context)
 **Setup**: Add to `.github/copilot-instructions.md`:
 
 ```markdown
@@ -477,6 +549,12 @@ Ask in chat: "Should I log this as a learning?"
 ```
 
 **Detection**: Manual review at session end
+
+### OpenClaw (Optional)
+
+OpenClaw-specific setup, promotion targets, and hybrid usage details are kept in
+`references/openclaw-integration.md` so this main skill stays focused on the core
+self-improvement workflow for coding agents.
 
 ### Agent-Agnostic Guidance
 

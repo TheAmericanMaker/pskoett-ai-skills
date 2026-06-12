@@ -237,7 +237,7 @@ Include when relevant:
 
 When user approves the plan:
 
-1. **Auto-start implementation** immediately (no "proceed" confirmation needed)
+1. **Auto-start implementation** immediately (no separate "proceed" confirmation needed). If `intent-framed-agent` is active, auto-start means flowing directly into its Intent Frame — the frame's own user confirmation still applies before coding begins; it is not an extra gate this skill adds
 2. Populate `TodoWrite` with checklist items (if `TodoWrite` is not available, track progress via structured comments in your output)
 3. At **natural breakpoints** (significant decisions), compare progress to plan
 
@@ -279,8 +279,9 @@ If resuming refinement, first summarize the current plan state and the most rece
 1. `plan-interview` (requirements and plan generation — you are here)
 2. `intent-framed-agent` (execution contract + scope drift monitoring)
 3. `context-surfing` (context quality monitoring — runs concurrently with intent-framed-agent)
-4. `simplify-and-harden` (post-completion quality/security pass)
-5. `self-improvement` (capture recurring patterns and promote durable rules)
+4. `verify-gate` (machine verification: compile + test + lint)
+5. `simplify-and-harden` (post-completion quality/security pass)
+6. `self-improvement` (capture recurring patterns and promote durable rules)
 
 ## Example
 
