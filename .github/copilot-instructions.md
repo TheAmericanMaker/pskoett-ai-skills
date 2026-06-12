@@ -1,6 +1,68 @@
 # Copilot Instructions
 
-Project context and conventions for GitHub Copilot.
+Project context and conventions for GitHub Copilot. Keep these files free of details that go stale easily (such as enumerated skill lists) — favor durable principles, guidelines, and how the repo functions.
+
+## Core Principles
+
+### 1. Think Before Coding
+
+Don't assume. Don't hide confusion. Surface tradeoffs.
+
+- **State assumptions explicitly** — if uncertain, ask rather than guess.
+- **Present multiple interpretations** — don't pick silently when ambiguity exists.
+- **Push back when warranted** — if a simpler approach exists, say so.
+- **Stop when confused** — name what's unclear and ask for clarification.
+
+### 2. Simplicity First
+
+Minimum code that solves the problem. Nothing speculative.
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If 200 lines could be 50, rewrite it.
+
+The test: would a senior engineer say this is overcomplicated? If yes, simplify.
+
+### 3. Surgical Changes
+
+Touch only what you must. Clean up only your own mess.
+
+When editing existing code:
+
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it — don't delete it.
+
+When your changes create orphans:
+
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
+
+The test: every changed line should trace directly to the user's request.
+
+### 4. Goal-Driven Execution
+
+Define success criteria. Loop until verified. Transform imperative tasks into verifiable goals:
+
+| Instead of... | Transform to... |
+| --- | --- |
+| "Add validation" | "Write tests for invalid inputs, then make them pass" |
+| "Fix the bug" | "Write a test that reproduces it, then make it pass" |
+| "Refactor X" | "Ensure tests pass before and after" |
+
+For multi-step tasks, state a brief plan as `[Step] -> verify: [check]`. Strong success criteria let you loop independently; weak criteria ("make it work") require constant clarification.
+
+### 5. Learn and Improve
+
+Every mistake is a learning opportunity. Log it, learn from it, prevent it.
+
+- After ANY correction from the user, log the lesson.
+- Write rules for yourself that prevent the same mistake.
+- Log to `.learnings/ERRORS.md`, `LEARNINGS.md`, or `FEATURE_REQUESTS.md`.
+- Promote broadly applicable learnings to `CLAUDE.md` and `AGENTS.md`.
 
 ## Project Overview
 
@@ -11,46 +73,6 @@ This is a collection of skills for AI agents following the [Agent Skills specifi
 - `skills/` - Public skills for distribution
 - `.claude/skills/` - Local Claude Code skills
 - `.learnings/` - Captured learnings, errors, and feature requests
-
-## Skill References In This Repo (Examples)
-
-Use these as canonical references when creating or updating skills.
-
-Public skills (`skills/`):
-- `skills/context-surfing/SKILL.md` - Monitor context window health and ride peak context quality during execution.
-- `skills/control-session-orchestrator/SKILL.md` - Control-plane workflow for coordinating multi-agent, multi-session project work from Codex, GitHub Copilot, or agent-app sessions.
-- `skills/intent-framed-agent/SKILL.md` - Capture intent at execution start and monitor coding-task scope drift.
-- `skills/plan-interview/SKILL.md` - Structured interview before implementation planning.
-- `skills/self-healing/SKILL.md` - Active runtime recovery: diagnose, patch, verify, file the verified fix when something breaks mid-task. Pairs with self-improvement (verifies + persists; self-improvement promotes).
-- `skills/self-healing-ci/SKILL.md` - CI-only self-healing workflow using gh-aw — diagnoses failed PR checks and proposes verified patches as PR comments / label-gated commits.
-- `skills/self-improvement/SKILL.md` - Capture learnings, errors, and feature requests. Receives recurrence handoffs from self-healing.
-- `skills/self-improvement-ci/SKILL.md` - CI-only self-improvement workflow using gh-aw.
-- `skills/simplify-and-harden/SKILL.md` - Post-completion simplify/harden quality pass for general agent sessions.
-- `skills/simplify-and-harden-ci/SKILL.md` - CI-only simplify/harden workflow using gh-aw.
-- `skills/learning-aggregator-ci/SKILL.md` - CI-only cross-session learning aggregation using gh-aw.
-- `skills/eval-creator-ci/SKILL.md` - CI-only eval regression runner using gh-aw.
-- `skills/agent-teams-simplify-and-harden/SKILL.md` - Parallel implementation and audit loop.
-- `skills/skill-pipeline/SKILL.md` - Pipeline orchestrator that classifies tasks and routes them through the right skill combination.
-- `skills/verify-gate/SKILL.md` - Machine verification gate (compile, test, lint) between implementation and quality review.
-- `skills/learning-aggregator/SKILL.md` - Cross-session analysis of accumulated .learnings/ files for pattern detection and promotion.
-- `skills/pre-flight-check/SKILL.md` - Session-start scan that surfaces relevant learnings and eval status before work begins.
-- `skills/eval-creator/SKILL.md` - Creates permanent eval cases from promoted learnings and runs regression checks.
-- `skills/skill-tester/SKILL.md` - Validates interactive skills against the Agent Skills spec and project conventions.
-- `skills/skill-tester-ci/SKILL.md` - Validates CI skills: gh-aw workflow compilation, permission correctness, and structural conventions.
-
-Plugin agents (`plugin/agents/`, shipped only in the full plugin bundle — not installable via `gh skill` / `npx skills`):
-- `plugin/agents/harness-updater.md` - Outer-loop **encode** step: applies promotion candidates to `CLAUDE.md` / `AGENTS.md` / `.github/copilot-instructions.md`. Referenced by name in several skills, but it is an agent, not a skill.
-
-Local Claude skills (`.claude/skills/`):
-- `.claude/skills/context-surfing/SKILL.md` - Local copy of the context-surfing workflow.
-- `.claude/skills/intent-framed-agent/SKILL.md` - Local copy of the intent-framed-agent workflow.
-- `.claude/skills/mcp-builder/SKILL.md` - Build high-quality MCP servers.
-- `.claude/skills/plan-interview/SKILL.md` - Local copy of the plan-interview workflow.
-- `.claude/skills/self-improvement/SKILL.md` - Local copy of the self-improvement workflow.
-- `.claude/skills/simplify-and-harden/SKILL.md` - Local copy of the simplify-and-harden workflow.
-- `.claude/skills/skill-creator/SKILL.md` - Guide for creating or updating skills.
-
-Keep this section synchronized across `AGENTS.md`, `CLAUDE.md`, and `.github/copilot-instructions.md`.
 
 ## Skill Format
 
